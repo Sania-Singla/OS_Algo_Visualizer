@@ -18,7 +18,7 @@ export default function ControlPanel({
     const [autoGenerate, setAutoGenerate] = useState(false);
     const [autoGenerateInterval, setAutoGenerateInterval] = useState(5);
     const [nextPid, setNextPid] = useState(
-        PROCESSES.length > 0 ? Math.max(...PROCESSES.map((p) => p.pid)) + 1 : 1
+        Math.max(...PROCESSES.map((p) => p.pid)) + 1
     );
     const autoGenRef = useRef();
 
@@ -27,14 +27,7 @@ export default function ControlPanel({
         setAutoGenerate(false);
         clearTimeout(animationRef.current);
         clearTimeout(autoGenRef.current); // Clear auto-generation timeout
-        setProcesses(
-            PROCESSES.map((p) => ({
-                ...p,
-                remainingTime: p.burstTime,
-                waitingTime: 0,
-                isExecuting: false,
-            }))
-        );
+        setProcesses(PROCESSES.map((p) => ({ ...p, isExecuting: false })));
         setGanttChart([]);
         setCurrentTime(0);
         setStats({
@@ -43,11 +36,7 @@ export default function ControlPanel({
             avgWaitTime: 0,
             avgTurnaroundTime: 0,
         });
-        setNextPid(
-            PROCESSES.length > 0
-                ? Math.max(...PROCESSES.map((p) => p.pid)) + 1
-                : 1
-        );
+        setNextPid(Math.max(...processes.map((p) => p.pid)) + 1);
     };
 
     const generateRandomProcess = () => {
@@ -68,22 +57,13 @@ export default function ControlPanel({
 
     const addRandomProcess = () => {
         const newProcess = generateRandomProcess();
-        setProcesses((prev) => [newProcess, ...prev]);
+        setProcesses((prev) => [...prev, newProcess]);
         setStats((prev) => ({
             ...prev,
             totalProcesses: prev.totalProcesses + 1,
         }));
-        setNextPid((prev) => prev + 1);
+        setNextPid(Math.max(...processes.map((p) => p.pid)) + 1);
     };
-
-    useEffect(() => {
-        if (autoGenerate && isRunning) {
-            autoGenRef.current = setTimeout(() => {
-                addRandomProcess();
-            }, autoGenerateInterval * 1000);
-        }
-        return () => clearTimeout(autoGenRef.current);
-    }, [autoGenerate, isRunning, autoGenerateInterval, currentTime, nextPid]);
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:block gap-4 w-full lg:w-1/3 bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-700">
