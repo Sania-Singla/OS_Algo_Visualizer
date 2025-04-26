@@ -111,12 +111,12 @@ export default function SRTF() {
     }, [isRunning, currentTime, processes, speed]);
 
     return (
-        <div className="px-10 py-8">
+        <div className="px-10 py-8 min-h-screen bg-gray-900 text-gray-200">
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
                     Shortest Remaining Time First Scheduling
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-gray-400">
                     Watch processes get impatient as they wait!
                 </p>
             </div>

@@ -18,54 +18,56 @@ export default function PriorityPreemptive() {
 
     const executeScheduler = () => {
         const updatedProcesses = [...processes];
-                const arrivedProcesses = updatedProcesses.filter(
-            p => p.arrivalTime <= currentTime && p.remainingTime > 0
+        const arrivedProcesses = updatedProcesses.filter(
+            (p) => p.arrivalTime <= currentTime && p.remainingTime > 0
         );
 
         // Check if all processes are completed
-        if (updatedProcesses.every(p => p.remainingTime === 0)) {
+        if (updatedProcesses.every((p) => p.remainingTime === 0)) {
             setIsRunning(false);
             return;
         }
 
         // If no processes arrived, increment time
         if (arrivedProcesses.length === 0) {
-            setGanttChart(prev => [
+            setGanttChart((prev) => [
                 ...prev,
-                { isIdle: true, start: currentTime, end: currentTime + 1 }
+                { isIdle: true, start: currentTime, end: currentTime + 1 },
             ]);
-            setCurrentTime(prev => prev + 1);
+            setCurrentTime((prev) => prev + 1);
             return;
         }
 
         // Find process with highest priority (lowest priority number)
-        const currentProcess = arrivedProcesses.reduce((prev, curr) => 
+        const currentProcess = arrivedProcesses.reduce((prev, curr) =>
             prev.priority < curr.priority ? prev : curr
         );
 
         // Update waiting times for other arrived processes
-        const updatedWithWaitingTimes = updatedProcesses.map(p => {
-            if (p.pid !== currentProcess.pid && 
-                p.arrivalTime <= currentTime && 
-                p.remainingTime > 0) {
+        const updatedWithWaitingTimes = updatedProcesses.map((p) => {
+            if (
+                p.pid !== currentProcess.pid &&
+                p.arrivalTime <= currentTime &&
+                p.remainingTime > 0
+            ) {
                 return { ...p, waitingTime: p.waitingTime + 1 };
             }
             return p;
         });
 
         // Update Gantt chart
-        setGanttChart(prev => [
+        setGanttChart((prev) => [
             ...prev,
             {
                 pid: currentProcess.pid,
                 start: currentTime,
                 end: currentTime + 1,
-                isIdle: false
-            }
+                isIdle: false,
+            },
         ]);
 
         // Execute current process for 1 time unit (preemptive)
-        const newProcesses = updatedWithWaitingTimes.map(p => {
+        const newProcesses = updatedWithWaitingTimes.map((p) => {
             if (p.pid === currentProcess.pid) {
                 return { ...p, remainingTime: p.remainingTime - 1 };
             }
@@ -77,29 +79,35 @@ export default function PriorityPreemptive() {
         // Update statistics if process completed
         if (currentProcess.remainingTime === 1) {
             const completedProcesses = newProcesses.filter(
-                p => p.remainingTime === 0
+                (p) => p.remainingTime === 0
             );
             const countCompleted = completedProcesses.length;
 
             if (countCompleted > 0) {
                 const totalWaitTime = completedProcesses.reduce(
-                    (sum, p) => sum + p.waitingTime, 0
+                    (sum, p) => sum + p.waitingTime,
+                    0
                 );
-                
+
                 const totalTurnaroundTime = completedProcesses.reduce(
-                    (sum, p) => sum + (p.waitingTime + p.burstTime), 0
+                    (sum, p) => sum + (p.waitingTime + p.burstTime),
+                    0
                 );
 
                 setStats({
                     totalProcesses: newProcesses.length,
                     completedProcesses: countCompleted,
-                    avgWaitTime: parseFloat((totalWaitTime / countCompleted).toFixed(2)),
-                    avgTurnaroundTime: parseFloat((totalTurnaroundTime / countCompleted).toFixed(2)),
+                    avgWaitTime: parseFloat(
+                        (totalWaitTime / countCompleted).toFixed(2)
+                    ),
+                    avgTurnaroundTime: parseFloat(
+                        (totalTurnaroundTime / countCompleted).toFixed(2)
+                    ),
                 });
             }
         }
 
-        setCurrentTime(prev => prev + 1);
+        setCurrentTime((prev) => prev + 1);
     };
 
     useEffect(() => {
@@ -110,13 +118,13 @@ export default function PriorityPreemptive() {
     }, [isRunning, currentTime, processes, speed]);
 
     return (
-        <div className="px-10 py-8">
+        <div className="px-10 py-8 min-h-screen bg-gray-900 text-gray-200">
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
                     Priority (Preemptive) Scheduling
                 </h1>
-                <p className="text-gray-600">
-                    Higher priority processes can interrupt lower priority ones
+                <p className="text-gray-400">
+                    Watch processes get impatient as they wait!
                 </p>
             </div>
 

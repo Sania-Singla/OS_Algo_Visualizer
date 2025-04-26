@@ -6,8 +6,8 @@ export default function VisualizationArea({
     processes,
     currentTime,
 }) {
-    // Filter processes to only show those that have arrived (arrivalTime <= currentTime)
     const [arrivedProcesses, setArrivedProcesses] = useState([]);
+
     useEffect(() => {
         setArrivedProcesses(
             processes.filter((process) => process.arrivalTime <= currentTime)
@@ -17,8 +17,8 @@ export default function VisualizationArea({
     return (
         <div className="w-full lg:w-2/3 space-y-6">
             {/* Process Queue Visualization */}
-            <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-                <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800 dark:text-gray-100">
                     <svg
                         className="w-5 h-5 mr-2 text-purple-500"
                         fill="currentColor"
@@ -37,7 +37,7 @@ export default function VisualizationArea({
                             />
                         ))
                     ) : (
-                        <div className="text-gray-400 italic">
+                        <div className="text-gray-400 dark:text-gray-500 italic">
                             No processes have arrived yet
                         </div>
                     )}
@@ -45,8 +45,8 @@ export default function VisualizationArea({
             </div>
 
             {/* Gantt Chart Visualization */}
-            <div className="bg-white p-6 rounded-2xl shadow-xl border border-gray-200">
-                <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800">
+            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800 dark:text-gray-100">
                     <svg
                         className="w-5 h-5 mr-2 text-blue-500"
                         fill="currentColor"
@@ -62,7 +62,7 @@ export default function VisualizationArea({
                 </h2>
                 <div className="flex items-center flex-wrap gap-3 py-4 px-2">
                     {ganttChart.length === 0 ? (
-                        <div className="w-full text-center py-8 text-gray-400">
+                        <div className="w-full text-center py-8 text-gray-400 dark:text-gray-500">
                             <svg
                                 className="w-12 h-12 mx-auto mb-2"
                                 fill="none"
@@ -73,7 +73,8 @@ export default function VisualizationArea({
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
                                     strokeWidth={1}
-                                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                                    d="M9 17v-2m3 2v-4m3 2v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 
+                                    5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                                 />
                             </svg>
                             <p>Press Start to begin the simulation</p>

@@ -86,12 +86,13 @@ export default function ControlPanel({
     }, [autoGenerate, isRunning, autoGenerateInterval, currentTime, nextPid]);
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:block gap-4 w-full lg:w-1/3 bg-gradient-to-b from-gray-50 to-gray-100 p-6 rounded-2xl shadow-xl border border-gray-200">
-            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:block gap-4 w-full lg:w-1/3 bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-700">
+            {/* Control Panel */}
+            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+                    <h2 className="text-xl font-semibold text-gray-100 flex items-center">
                         <svg
-                            className="w-5 h-5 mr-2 text-blue-500"
+                            className="w-5 h-5 mr-2 text-blue-400"
                             fill="currentColor"
                             viewBox="0 0 20 20"
                         >
@@ -104,7 +105,7 @@ export default function ControlPanel({
                         Control Panel
                     </h2>
                     <div className="flex items-center">
-                        <span className="text-sm mr-2 text-gray-600">
+                        <span className="text-sm mr-2 text-gray-400">
                             Speed:
                         </span>
                         <select
@@ -112,7 +113,7 @@ export default function ControlPanel({
                             onChange={(e) =>
                                 setSpeed(parseFloat(e.target.value))
                             }
-                            className="text-sm border rounded-md px-2 py-1 bg-white"
+                            className="text-sm border rounded-md px-2 py-1 bg-gray-700 text-gray-100"
                         >
                             <option value={0.25}>0.25x</option>
                             <option value={0.5}>0.5x</option>
@@ -123,11 +124,12 @@ export default function ControlPanel({
                     </div>
                 </div>
 
+                {/* Start/Pause & Reset */}
                 <div className="flex gap-3 mb-6 justify-evenly flex-col lg:flex-row">
                     <button
                         onClick={() => setIsRunning(!isRunning)}
                         className={`w-full text-white font-medium shadow-md hover:shadow-lg rounded-lg h-[50px] flex items-center justify-center transition-all
-                    ${isRunning ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700' : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700'}`}
+                        ${isRunning ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-green-600 to-green-700'}`}
                     >
                         <svg
                             className="size-11"
@@ -155,7 +157,7 @@ export default function ControlPanel({
                     </button>
                     <button
                         onClick={resetSimulation}
-                        className="w-full h-[50px] bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                        className="w-full h-[50px] bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
                     >
                         <svg
                             className="size-5 mr-2"
@@ -175,10 +177,10 @@ export default function ControlPanel({
                 </div>
             </div>
 
-            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="font-medium text-lg mb-3 flex items-center text-gray-700">
+            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+                <h3 className="font-medium text-lg mb-3 flex items-center text-gray-100">
                     <svg
-                        className="w-5 h-5 mr-2 text-blue-500"
+                        className="w-5 h-5 mr-2 text-blue-400"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                     >
@@ -193,7 +195,7 @@ export default function ControlPanel({
 
                 <button
                     onClick={addRandomProcess}
-                    className="w-full mb-3 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                    className="w-full mb-3 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
                 >
                     <svg
                         className="w-5 h-5 mr-2"
@@ -221,20 +223,20 @@ export default function ControlPanel({
                                 onChange={() => setAutoGenerate(!autoGenerate)}
                             />
                             <div
-                                className={`block w-10 h-6 rounded-full ${autoGenerate ? 'bg-blue-500' : 'bg-gray-400'}`}
+                                className={`block w-10 h-6 rounded-full ${autoGenerate ? 'bg-blue-600' : 'bg-gray-600'}`}
                             ></div>
                             <div
                                 className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${autoGenerate ? 'transform translate-x-4' : ''}`}
                             ></div>
                         </div>
-                        <div className="ml-3 text-sm font-medium text-gray-700">
+                        <div className="ml-3 text-sm font-medium text-gray-300">
                             Auto Generate
                         </div>
                     </label>
 
                     {autoGenerate && (
                         <div className="flex items-center">
-                            <span className="text-sm mr-2 text-gray-600">
+                            <span className="text-sm mr-2 text-gray-400">
                                 Every:
                             </span>
                             <select
@@ -244,7 +246,7 @@ export default function ControlPanel({
                                         parseInt(e.target.value)
                                     )
                                 }
-                                className="text-sm border rounded-md px-2 py-1 bg-white"
+                                className="text-sm border rounded-md px-2 py-1 bg-gray-700 text-gray-100"
                             >
                                 <option value={3}>3s</option>
                                 <option value={5}>5s</option>
@@ -256,10 +258,10 @@ export default function ControlPanel({
                 </div>
             </div>
 
-            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="font-medium text-lg mb-3 flex items-center text-gray-700">
+            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+                <h3 className="font-medium text-lg mb-3 flex items-center text-gray-100">
                     <svg
-                        className="w-5 h-5 mr-2 text-blue-500"
+                        className="w-5 h-5 mr-2 text-blue-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -274,45 +276,46 @@ export default function ControlPanel({
                     Simulation Time:{' '}
                     <span className="ml-2 text-blue-600">{currentTime}s</span>
                 </h3>
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
-                        <div className="text-sm text-blue-600">
+                    <div className="bg-blue-800 p-3 rounded-lg border border-blue-600">
+                        <div className="text-sm text-blue-300">
                             Total Processes
                         </div>
-                        <div className="text-2xl font-bold text-blue-700">
+                        <div className="text-2xl font-bold text-blue-400">
                             {stats.totalProcesses}
                         </div>
                     </div>
-                    <div className="bg-green-50 p-3 rounded-lg border border-green-100">
-                        <div className="text-sm text-green-600">Completed</div>
-                        <div className="text-2xl font-bold text-green-700">
+                    <div className="bg-green-800 p-3 rounded-lg border border-green-600">
+                        <div className="text-sm text-green-300">Completed</div>
+                        <div className="text-2xl font-bold text-green-400">
                             {stats.completedProcesses}
                         </div>
                     </div>
-                    <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-                        <div className="text-sm text-yellow-600">
+                    <div className="bg-yellow-800 p-3 rounded-lg border border-yellow-600">
+                        <div className="text-sm text-yellow-300">
                             Avg Wait Time
                         </div>
-                        <div className="text-2xl font-bold text-yellow-700">
+                        <div className="text-2xl font-bold text-yellow-400">
                             {stats.avgWaitTime}s
                         </div>
                     </div>
-                    <div className="bg-purple-50 p-3 rounded-lg border border-purple-100">
-                        <div className="text-sm text-purple-600">
+                    <div className="bg-purple-800 p-3 rounded-lg border border-purple-600">
+                        <div className="text-sm text-purple-300">
                             Avg Turnaround
                         </div>
-                        <div className="text-2xl font-bold text-purple-700">
+                        <div className="text-2xl font-bold text-purple-400">
                             {stats.avgTurnaroundTime}s
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div className="h-fit sm:h-full lg:h-fit bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                <h3 className="font-medium text-lg mb-3 text-gray-700">
+            <div className="h-fit sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+                <h3 className="font-medium text-lg mb-3 text-gray-100">
                     Active Processes
                 </h3>
-                <div className="space-y-2 ">
+                <div className="space-y-2">
                     {processes.length > 0 && isRunning ? (
                         processes
                             .filter((p) => p.remainingTime > 0)
@@ -320,21 +323,21 @@ export default function ControlPanel({
                                 <div
                                     key={p.pid}
                                     className={`flex justify-between items-center p-3 rounded-lg border transition-all
-                            ${p.isExecuting ? 'border-blue-300 bg-blue-50' : 'border-gray-200'}`}
+                                        ${p.isExecuting ? 'border-blue-500 bg-blue-900' : 'border-gray-700'}`}
                                 >
                                     <span
-                                        className={`font-medium ${p.isExecuting ? 'text-blue-600' : ''}`}
+                                        className={`font-medium ${p.isExecuting ? 'text-blue-400' : 'text-gray-300'}`}
                                     >
                                         P{p.pid}
                                     </span>
                                     <div className="flex items-center space-x-4">
-                                        <span className="text-sm text-gray-600">
+                                        <span className="text-sm text-gray-400">
                                             <span className="font-medium">
                                                 RT:
                                             </span>{' '}
                                             {p.remainingTime}/{p.burstTime}
                                         </span>
-                                        <span className="text-sm text-gray-600">
+                                        <span className="text-sm text-gray-400">
                                             <span className="font-medium">
                                                 WT:
                                             </span>{' '}

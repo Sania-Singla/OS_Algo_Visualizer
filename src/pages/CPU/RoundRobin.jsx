@@ -3,96 +3,135 @@ import { PROCESSES } from '../../constants/processes';
 import { ControlPanel, VisualizationArea } from '../../pages/General';
 
 export default function RoundRobin() {
-    const [processes, setProcesses] = useState(PROCESSES);
+    const [processes, setProcesses] = useState(
+        PROCESSES.map((p) => ({ ...p }))
+    );
     const [ganttChart, setGanttChart] = useState([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
     const [speed, setSpeed] = useState(1);
     const [quantum, setQuantum] = useState(1);
+    const [completed, setCompleted] = useState(0);
+    const [currentIndex, setCurrentIndex] = useState(0);
     const [stats, setStats] = useState({
         totalProcesses: PROCESSES.length,
         completedProcesses: 0,
         avgWaitTime: 0,
         avgTurnaroundTime: 0,
     });
+
     const animationRef = useRef();
 
     const executeScheduler = () => {
-        const updatedProcesses = [...processes];
-        const arrivedProcesses = updatedProcesses.filter(
-            (p) => p.arrivalTime <= currentTime && p.remainingTime > 0
-        );
-
-        if (arrivedProcesses.length === 0) {
-            setCurrentTime((prev) => prev + 1);
+        if (completed === processes.length) {
+            setIsRunning(false);
             return;
         }
 
-        const currentProcess = arrivedProcesses[0]; // Round Robin: first arrived process
-        const timeSlice = Math.min(currentProcess.remainingTime, quantum);
-        setGanttChart((prev) => [
-            ...prev,
-            {
-                pid: currentProcess.pid,
-                start: currentTime,
-                end: currentTime + timeSlice,
-            },
-        ]);
+        setProcesses((prevProcesses) => {
+            const updatedProcesses = [...prevProcesses];
+            let p = updatedProcesses[currentIndex];
 
-        setProcesses((prev) =>
-            prev.map((p) => {
-                if (p.pid === currentProcess.pid) {
-                    return { ...p, remainingTime: p.remainingTime - timeSlice };
+            if (p.arrivalTime <= currentTime && p.remainingTime > 0) {
+                const execTime = Math.min(p.remainingTime, quantum);
+
+                setGanttChart((prev) => [
+                    ...prev,
+                    {
+                        pid: p.pid,
+                        start: currentTime,
+                        end: currentTime + execTime,
+                    },
+                ]);
+
+                p.remainingTime -= execTime;
+
+                if (p.remainingTime === 0) {
+                    p.completionTime = currentTime + execTime;
+                    setCompleted((prev) => prev + 1);
                 }
-                return p;
-            })
-        );
 
-        if (currentProcess.remainingTime === timeSlice) {
-            const completedProcesses = updatedProcesses.filter(
-                (p) => p.remainingTime === 0
-            ).length;
-            const avgWaitTime =
-                completedProcesses > 0
-                    ? updatedProcesses.reduce(
-                          (sum, p) => sum + (p.waitingTime + p.burstTime),
-                          0
-                      ) / completedProcesses
-                    : 0;
-            const avgTurnaroundTime =
-                completedProcesses > 0
-                    ? updatedProcesses.reduce(
-                          (sum, p) => sum + p.waitingTime,
-                          0
-                      ) / completedProcesses
-                    : 0;
+                setCurrentTime((prev) => prev + execTime);
+            } else {
+                const anyReady = updatedProcesses.some(
+                    (proc) =>
+                        proc.arrivalTime <= currentTime &&
+                        proc.remainingTime > 0
+                );
+                if (!anyReady) {
+                    setCurrentTime((prev) => prev + 1);
+                }
+            }
 
-            setStats({
-                totalProcesses: updatedProcesses.length,
-                completedProcesses,
-                avgWaitTime: parseFloat(avgWaitTime.toFixed(2)),
-                avgTurnaroundTime: parseFloat(avgTurnaroundTime.toFixed(2)),
-            });
-        }
+            return updatedProcesses;
+        });
 
-        setCurrentTime((prev) => prev + timeSlice);
+        setCurrentIndex((prev) => (prev + 1) % processes.length);
+    };
+
+    const calculateStats = () => {
+        const totalProcesses = processes.length;
+        let totalWaitingTime = 0;
+        let totalTurnaroundTime = 0;
+
+        processes.forEach((p) => {
+            const turnaroundTime = (p.completionTime || 0) - p.arrivalTime;
+            const waitingTime = turnaroundTime - p.burstTime;
+
+            totalWaitingTime += waitingTime;
+            totalTurnaroundTime += turnaroundTime;
+        });
+
+        setStats({
+            totalProcesses,
+            completedProcesses: completed,
+            avgWaitTime: totalProcesses
+                ? parseFloat((totalWaitingTime / totalProcesses).toFixed(2))
+                : 0,
+            avgTurnaroundTime: totalProcesses
+                ? parseFloat((totalTurnaroundTime / totalProcesses).toFixed(2))
+                : 0,
+        });
     };
 
     useEffect(() => {
         if (isRunning) {
             animationRef.current = setTimeout(executeScheduler, 1000 / speed);
+        } else {
+            clearTimeout(animationRef.current);
         }
         return () => clearTimeout(animationRef.current);
-    }, [isRunning, currentTime, processes, speed]);
+    }, [isRunning, currentTime, currentIndex, completed, speed]);
+
+    useEffect(() => {
+        if (completed === processes.length) {
+            calculateStats();
+        }
+    }, [completed]);
+
+    const resetSimulation = () => {
+        setProcesses(PROCESSES.map((p) => ({ ...p })));
+        setGanttChart([]);
+        setCurrentTime(0);
+        setCompleted(0);
+        setCurrentIndex(0);
+        setStats({
+            totalProcesses: PROCESSES.length,
+            completedProcesses: 0,
+            avgWaitTime: 0,
+            avgTurnaroundTime: 0,
+        });
+        setIsRunning(false);
+    };
 
     return (
-        <div className="px-10 py-8">
+        <div className="px-10 py-8 min-h-screen bg-gray-900 text-gray-200">
             <div className="text-center mb-8">
-                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
-                    Round Robin Scheduling
+                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
+                    Round Robin Scheduling (Quantum: {quantum})
                 </h1>
-                <p className="text-gray-600">
-                    Watch processes get impatient as they wait!
+                <p className="text-gray-400">
+                    Processes execute for a fixed time slice before moving to the next
                 </p>
             </div>
 
@@ -110,6 +149,9 @@ export default function RoundRobin() {
                     setGanttChart={setGanttChart}
                     currentTime={currentTime}
                     animationRef={animationRef}
+                    quantum={quantum}
+                    setQuantum={setQuantum}
+                    resetSimulation={resetSimulation}
                 />
                 <VisualizationArea
                     ganttChart={ganttChart}
