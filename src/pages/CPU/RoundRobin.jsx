@@ -1,11 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { PROCESSES } from '../../constants/processes';
 import { ControlPanel, VisualizationArea } from '../../pages/General';
 
 export default function RoundRobin() {
-    const [processes, setProcesses] = useState(
-        PROCESSES.map((p) => ({ ...p }))
-    );
+    const [processes, setProcesses] = useState([]);
     const [ganttChart, setGanttChart] = useState([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
@@ -14,7 +11,7 @@ export default function RoundRobin() {
     const [completed, setCompleted] = useState(0);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [stats, setStats] = useState({
-        totalProcesses: PROCESSES.length,
+        totalProcesses: processes.length,
         completedProcesses: 0,
         avgWaitTime: 0,
         avgTurnaroundTime: 0,
@@ -110,13 +107,13 @@ export default function RoundRobin() {
     }, [completed]);
 
     const resetSimulation = () => {
-        setProcesses(PROCESSES.map((p) => ({ ...p })));
+        setProcesses(processes.map((p) => ({ ...p })));
         setGanttChart([]);
         setCurrentTime(0);
         setCompleted(0);
         setCurrentIndex(0);
         setStats({
-            totalProcesses: PROCESSES.length,
+            totalProcesses: processes.length,
             completedProcesses: 0,
             avgWaitTime: 0,
             avgTurnaroundTime: 0,
@@ -131,7 +128,8 @@ export default function RoundRobin() {
                     Round Robin Scheduling (Quantum: {quantum})
                 </h1>
                 <p className="text-gray-400">
-                    Processes execute for a fixed time slice before moving to the next
+                    Processes execute for a fixed time slice before moving to
+                    the next
                 </p>
             </div>
 

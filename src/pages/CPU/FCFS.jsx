@@ -1,15 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { PROCESSES } from '../../constants/processes';
 import { ControlPanel, VisualizationArea } from '../../pages/General';
 
 export default function FCFS() {
-    const [processes, setProcesses] = useState(PROCESSES);
+    const [processes, setProcesses] = useState([]);
     const [ganttChart, setGanttChart] = useState([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
     const [speed, setSpeed] = useState(1);
     const [stats, setStats] = useState({
-        totalProcesses: PROCESSES.length,
+        totalProcesses: processes.length,
         completedProcesses: 0,
         avgWaitTime: 0,
         avgTurnaroundTime: 0,
@@ -108,7 +107,6 @@ export default function FCFS() {
         if (isRunning) {
             animationRef.current = setTimeout(executeScheduler, 1000 / speed);
         }
-        return () => clearTimeout(animationRef.current);
     }, [isRunning, currentTime, processes, speed]);
 
     return (

@@ -1,5 +1,4 @@
-import { useRef, useState, useEffect } from 'react';
-import { PROCESSES } from '../../constants/processes';
+import { useEffect, useRef, useState } from 'react';
 
 export default function ControlPanel({
     speed,
@@ -18,7 +17,7 @@ export default function ControlPanel({
     const [autoGenerate, setAutoGenerate] = useState(false);
     const [autoGenerateInterval, setAutoGenerateInterval] = useState(5);
     const [nextPid, setNextPid] = useState(
-        Math.max(...PROCESSES.map((p) => p.pid)) + 1
+        processes.length > 0 ? Math.max(...processes.map((p) => p.pid)) + 1 : 1
     );
     const autoGenRef = useRef();
 
@@ -27,22 +26,22 @@ export default function ControlPanel({
         setAutoGenerate(false);
         clearTimeout(animationRef.current);
         clearTimeout(autoGenRef.current); // Clear auto-generation timeout
-        setProcesses(PROCESSES.map((p) => ({ ...p, isExecuting: false })));
+        setProcesses([]);
         setGanttChart([]);
         setCurrentTime(0);
         setStats({
-            totalProcesses: PROCESSES.length,
+            totalProcesses: processes.length,
             completedProcesses: 0,
             avgWaitTime: 0,
             avgTurnaroundTime: 0,
         });
-        setNextPid(Math.max(...processes.map((p) => p.pid)) + 1);
+        setNextPid(1);
     };
 
-    const generateRandomProcess = () => {
+    const generateRandomProcess = (currentTime, nextPid) => {
         const burstTime = Math.floor(Math.random() * 5) + 1; // 1-5
         const priority = Math.floor(Math.random() * 3) + 1; // 1-3
-        const arrivalTime = currentTime + Math.floor(Math.random() * 3); // Current time to +2
+        const arrivalTime = currentTime + Math.floor(Math.random() * 2); // currentTime or currentTime + 1
 
         return {
             pid: nextPid,
@@ -56,14 +55,33 @@ export default function ControlPanel({
     };
 
     const addRandomProcess = () => {
-        const newProcess = generateRandomProcess();
-        setProcesses((prev) => [...prev, newProcess]);
-        setStats((prev) => ({
-            ...prev,
-            totalProcesses: prev.totalProcesses + 1,
-        }));
-        setNextPid(Math.max(...processes.map((p) => p.pid)) + 1);
+        setProcesses((prevProcesses) => {
+            const newProcess = generateRandomProcess(currentTime, nextPid);
+            const updatedProcesses = [...prevProcesses, newProcess];
+
+            setStats((prevStats) => ({
+                ...prevStats,
+                totalProcesses: updatedProcesses.length,
+            }));
+
+            setNextPid((prevPid) => prevPid + 1);
+
+            console.log(newProcess);
+            return updatedProcesses;
+        });
     };
+
+    useEffect(() => {
+        if (autoGenerate && isRunning) {
+            autoGenRef.current = setTimeout(() => {
+                if (processes.length < 10) {
+                    addRandomProcess();
+                } else {
+                    clearTimeout(autoGenRef.current);
+                }
+            }, autoGenerateInterval * 1000);
+        }
+    }, [autoGenerate, isRunning, autoGenerateInterval, currentTime, nextPid]);
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:block gap-4 w-full lg:w-1/3 bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-700">
@@ -93,7 +111,7 @@ export default function ControlPanel({
                             onChange={(e) =>
                                 setSpeed(parseFloat(e.target.value))
                             }
-                            className="text-sm border rounded-md px-2 py-1 bg-gray-700 text-gray-100"
+                            className="cursor-pointer text-sm border rounded-md px-2 py-1 bg-gray-700 text-gray-100"
                         >
                             <option value={0.25}>0.25x</option>
                             <option value={0.5}>0.5x</option>
@@ -108,7 +126,7 @@ export default function ControlPanel({
                 <div className="flex gap-3 mb-6 justify-evenly flex-col lg:flex-row">
                     <button
                         onClick={() => setIsRunning(!isRunning)}
-                        className={`w-full text-white font-medium shadow-md hover:shadow-lg rounded-lg h-[50px] flex items-center justify-center transition-all
+                        className={`cursor-pointer w-full text-white font-medium shadow-md hover:shadow-lg rounded-lg h-[50px] flex items-center justify-center transition-all
                         ${isRunning ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-green-600 to-green-700'}`}
                     >
                         <svg
@@ -137,7 +155,7 @@ export default function ControlPanel({
                     </button>
                     <button
                         onClick={resetSimulation}
-                        className="w-full h-[50px] bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                        className="cursor-pointer w-full h-[50px] bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
                     >
                         <svg
                             className="size-5 mr-2"
@@ -175,7 +193,7 @@ export default function ControlPanel({
 
                 <button
                     onClick={addRandomProcess}
-                    className="w-full mb-3 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                    className="cursor-pointer w-full mb-3 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
                 >
                     <svg
                         className="w-5 h-5 mr-2"
@@ -226,7 +244,7 @@ export default function ControlPanel({
                                         parseInt(e.target.value)
                                     )
                                 }
-                                className="text-sm border rounded-md px-2 py-1 bg-gray-700 text-gray-100"
+                                className="cursor-pointer text-sm border rounded-md px-2 py-1 bg-gray-700 text-gray-100"
                             >
                                 <option value={3}>3s</option>
                                 <option value={5}>5s</option>
@@ -288,50 +306,6 @@ export default function ControlPanel({
                             {stats.avgTurnaroundTime}s
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div className="h-fit sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
-                <h3 className="font-medium text-lg mb-3 text-gray-100">
-                    Active Processes
-                </h3>
-                <div className="space-y-2">
-                    {processes.length > 0 && isRunning ? (
-                        processes
-                            .filter((p) => p.remainingTime > 0)
-                            .map((p) => (
-                                <div
-                                    key={p.pid}
-                                    className={`flex justify-between items-center p-3 rounded-lg border transition-all
-                                        ${p.isExecuting ? 'border-blue-500 bg-blue-900' : 'border-gray-700'}`}
-                                >
-                                    <span
-                                        className={`font-medium ${p.isExecuting ? 'text-blue-400' : 'text-gray-300'}`}
-                                    >
-                                        P{p.pid}
-                                    </span>
-                                    <div className="flex items-center space-x-4">
-                                        <span className="text-sm text-gray-400">
-                                            <span className="font-medium">
-                                                RT:
-                                            </span>{' '}
-                                            {p.remainingTime}/{p.burstTime}
-                                        </span>
-                                        <span className="text-sm text-gray-400">
-                                            <span className="font-medium">
-                                                WT:
-                                            </span>{' '}
-                                            {p.waitingTime}
-                                        </span>
-                                        {p.isExecuting && (
-                                            <span className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></span>
-                                        )}
-                                    </div>
-                                </div>
-                            ))
-                    ) : (
-                        <p className="text-gray-500">No active processes</p>
-                    )}
                 </div>
             </div>
         </div>

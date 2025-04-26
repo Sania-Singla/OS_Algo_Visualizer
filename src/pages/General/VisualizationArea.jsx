@@ -6,41 +6,96 @@ export default function VisualizationArea({
     processes,
     currentTime,
 }) {
-    const [arrivedProcesses, setArrivedProcesses] = useState([]);
+    const [arrivedProcesses, setArrivedProcesses] = useState(processes);
 
     useEffect(() => {
         setArrivedProcesses(
-            processes.filter((process) => process.arrivalTime <= currentTime)
+            processes.filter((p) => p.arrivalTime <= currentTime)
         );
     }, [currentTime, processes]);
 
     return (
         <div className="w-full lg:w-2/3 space-y-6">
-            {/* Process Queue Visualization */}
-            <div className="bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
-                <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800 dark:text-gray-100">
-                    <svg
-                        className="w-5 h-5 mr-2 text-purple-500"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                    </svg>
-                    Process Queue (Current Time: {currentTime}s)
-                </h2>
-                <div className="flex flex-wrap justify-center">
-                    {arrivedProcesses.length > 0 ? (
-                        arrivedProcesses.map((process) => (
-                            <ProcessVisualization
-                                key={process.pid}
-                                process={process}
-                            />
-                        ))
-                    ) : (
-                        <div className="text-gray-400 dark:text-gray-500 italic">
-                            No processes have arrived yet
-                        </div>
-                    )}
+            <div className="flex gap-6">
+                {/* Scheduled processes */}
+                <div className="min-w-1/3 h-fit sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+                    <h3 className="font-medium text-lg mb-3 text-gray-100">
+                        Scheduled Processes
+                    </h3>
+                    <div className="space-y-2">
+                        {processes.length > 0 ? (
+                            processes
+                                .filter((p) => p.remainingTime > 0)
+                                .map((p) => (
+                                    <div
+                                        key={p.pid}
+                                        className={`flex justify-between items-center p-3 rounded-lg border transition-all
+                                        ${p.isExecuting ? 'border-blue-500 bg-blue-900' : 'border-gray-700'}`}
+                                    >
+                                        <span
+                                            className={`font-medium ${p.isExecuting ? 'text-blue-400' : 'text-gray-300'}`}
+                                        >
+                                            P{p.pid}
+                                        </span>
+                                        <div className="flex items-center space-x-4">
+                                            <span className="text-sm text-gray-400">
+                                                <span className="font-medium">
+                                                    AT:
+                                                </span>{' '}
+                                                {p.arrivalTime}
+                                            </span>
+                                            <span className="text-sm text-gray-400">
+                                                <span className="font-medium">
+                                                    RT:
+                                                </span>{' '}
+                                                {p.remainingTime}/{p.burstTime}
+                                            </span>
+                                            <span className="text-sm text-gray-400">
+                                                <span className="font-medium">
+                                                    WT:
+                                                </span>{' '}
+                                                {p.waitingTime}
+                                            </span>
+                                            {p.isExecuting && (
+                                                <span className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))
+                        ) : (
+                            <p className="text-gray-500">
+                                No scheduled processes
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Process Queue Visualization */}
+                <div className="w-full bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700">
+                    <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800 dark:text-gray-100">
+                        <svg
+                            className="w-5 h-5 mr-2 text-purple-500"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
+                        Process Queue (Current Time: {currentTime}s)
+                    </h2>
+                    <div className="flex flex-wrap justify-center">
+                        {arrivedProcesses.length > 0 ? (
+                            arrivedProcesses.map((process) => (
+                                <ProcessVisualization
+                                    key={process.pid}
+                                    process={process}
+                                />
+                            ))
+                        ) : (
+                            <div className="text-gray-400 dark:text-gray-500 italic">
+                                No processes have arrived yet
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
