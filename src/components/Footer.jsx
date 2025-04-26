@@ -9,7 +9,7 @@ export default function Footer() {
             className="max-w-6xl mx-auto mt-16 pt-8 border-t border-gray-800 text-center text-gray-500"
         >
             <p>
-                © {new Date().getFullYear()} Algorithm Visualizer. All rights
+                © {new Date().getFullYear()} VisualizeOS. All rights
                 reserved.
             </p>
         </motion.footer>

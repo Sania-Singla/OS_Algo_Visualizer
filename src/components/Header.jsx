@@ -12,7 +12,7 @@ export default function Header() {
             <div className="flex flex-col sm:flex-row gap-6 justify-between text-center items-center">
                 <div className="w-full flex flex-col items-center sm:items-start">
                     <h1 className="text-3xl lg:text-4xl py-1 font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
-                        Algorithm Visualizer
+                        VisualizeOS
                     </h1>
                     <p className="text-gray-400 mt-2">
                         Interactive visualizations for operating system
