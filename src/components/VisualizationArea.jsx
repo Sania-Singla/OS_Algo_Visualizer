@@ -19,7 +19,7 @@ export default function VisualizationArea({
         <div className="w-full lg:w-2/3 space-y-6">
             <div className="flex flex-col md:flex-row gap-6">
                 {/* Scheduled processes */}
-                <div className="min-w-fit max-w-1/4 h-full bg-gray-900 p-6 rounded-xl border border-gray-700 shadow-sm">
+                <div className="min-w-fit w-full md:max-w-1/4 h-full bg-gray-900 p-6 rounded-xl border border-gray-700 shadow-sm">
                     <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800 dark:text-gray-100">
                         <svg
                             className="w-5 h-5 mr-2 text-purple-500"

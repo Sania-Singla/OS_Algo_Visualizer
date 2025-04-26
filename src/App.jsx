@@ -170,7 +170,7 @@ const AlgorithmTabs = ({ activeTab, setActiveTab }) => {
     ];
 
     return (
-        <div className="flex space-x-2 mb-8">
+        <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-8">
             {tabs.map((tab) => (
                 <button
                     key={tab.id}
@@ -219,10 +219,10 @@ export default function App() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white px-10 py-8">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white px-6 md:px-10 py-8">
             <Header />
 
-            <main className="w-full px-4">
+            <main className="px-4 overflow-auto">
                 <AlgorithmTabs
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}

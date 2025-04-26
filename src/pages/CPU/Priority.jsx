@@ -117,7 +117,7 @@ export default function Priority() {
     }, [isRunning, currentTime, processes, speed]);
 
     return (
-        <div className="px-10 py-8 min-h-screen bg-gray-900 text-gray-200">
+        <div className="px-6 md:px-10 py-8 min-h-screen bg-gray-900 text-gray-200">
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
                     Higher Priority First (Non-Preemptive) Scheduling
