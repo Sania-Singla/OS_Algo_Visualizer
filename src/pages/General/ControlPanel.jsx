@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 
 export default function ControlPanel({
     speed,
@@ -20,13 +20,10 @@ export default function ControlPanel({
     const [nextPid, setNextPid] = useState(
         processes.length > 0 ? Math.max(...processes.map((p) => p.pid)) + 1 : 1
     );
-    const autoGenRef = useRef();
 
     const resetSimulation = () => {
         setIsRunning(false);
-        setAutoGenerate(false);
         clearTimeout(animationRef.current);
-        clearTimeout(autoGenRef.current); // Clear auto-generation timeout
         setProcesses([]);
         setGanttChart([]);
         setCurrentTime(0);
@@ -268,7 +265,7 @@ export default function ControlPanel({
 
                     <button
                         onClick={addManualProcess}
-                        className="cursor-pointer w-full mb-3 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                        className="cursor-pointer w-full mb-3 mt-6 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
                     >
                         Add Manual Process
                     </button>

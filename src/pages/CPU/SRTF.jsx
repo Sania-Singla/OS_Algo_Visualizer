@@ -31,6 +31,15 @@ export default function SRTF() {
         }
 
         if (arrivedProcesses.length === 0) {
+            // No process has arrived yet -> CPU Idle
+            setGanttChart((prev) => [
+                ...prev,
+                {
+                    start: currentTime,
+                    isIdle: true,
+                    end: currentTime + 1,
+                },
+            ]);
             setCurrentTime((prev) => prev + 1);
             return;
         }

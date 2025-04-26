@@ -27,11 +27,15 @@ export default function PriorityPreemptive() {
             return;
         }
 
-        // If no processes arrived, increment time
         if (arrivedProcesses.length === 0) {
+            // No process has arrived yet -> CPU Idle
             setGanttChart((prev) => [
                 ...prev,
-                { isIdle: true, start: currentTime, end: currentTime + 1 },
+                {
+                    start: currentTime,
+                    isIdle: true,
+                    end: currentTime + 1,
+                },
             ]);
             setCurrentTime((prev) => prev + 1);
             return;

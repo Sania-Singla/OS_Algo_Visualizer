@@ -20,7 +20,7 @@ export default function Header() {
                     </p>
                 </div>
                 <a
-                    href="https://github.com/Sania-Singla/algorithm-visualizer"
+                    href="https://github.com/Sania-Singla/OS_Algo_Visualizer"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center space-x-2 bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors"

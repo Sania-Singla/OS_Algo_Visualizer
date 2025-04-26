@@ -32,6 +32,15 @@ export default function FCFS() {
         }
 
         if (arrivedProcesses.length === 0) {
+            // No process has arrived yet -> CPU Idle
+            setGanttChart((prev) => [
+                ...prev,
+                {
+                    start: currentTime,
+                    isIdle: true,
+                    end: currentTime + 1,
+                },
+            ]);
             setCurrentTime((prev) => prev + 1);
             return;
         }
@@ -53,6 +62,7 @@ export default function FCFS() {
             return p;
         });
 
+        // Add the executing process to the Gantt chart
         setGanttChart((prev) => [
             ...prev,
             {
@@ -71,7 +81,7 @@ export default function FCFS() {
 
         setProcesses(newProcesses);
 
-        // Calculate statistics if process completed
+        // Calculate statistics if processes completed
         const completedProcesses = newProcesses.filter(
             (p) => p.remainingTime === 0
         );
@@ -88,7 +98,7 @@ export default function FCFS() {
                 0
             );
 
-            setStats((prev) => ({
+            setStats({
                 totalProcesses: newProcesses.length,
                 completedProcesses: countCompleted,
                 avgWaitTime: parseFloat(
@@ -97,10 +107,10 @@ export default function FCFS() {
                 avgTurnaroundTime: parseFloat(
                     (totalTurnaroundTime / countCompleted).toFixed(2)
                 ),
-            }));
+            });
         }
 
-        setCurrentTime((prev) => prev + 1);
+        setCurrentTime((prev) => prev + executionTime);
     };
 
     useEffect(() => {

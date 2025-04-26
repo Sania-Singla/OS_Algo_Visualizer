@@ -14,7 +14,7 @@ export default function GanttBar({ pid, start, end, isIdle }) {
         <div
             className={`h-10 ${barColor} rounded-lg flex items-center justify-center text-white font-medium shadow-md
             transition-all duration-200 hover:scale-105 hover:shadow-lg`}
-            style={{ width: `${width}px`, minWidth: '40px' }}
+            style={{ width: `${isIdle ? 75 : width}px`, minWidth: '40px' }}
         >
             {isIdle ? (
                 <span className="text-gray-600 flex items-center">
