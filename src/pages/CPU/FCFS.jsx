@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { ControlPanel, VisualizationArea } from '../../pages/General';
+import { ControlPanel, VisualizationArea } from '../../components';
 
 export default function FCFS() {
     const [processes, setProcesses] = useState([]);

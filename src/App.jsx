@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Footer, Header } from './pages/General';
+import { Footer, Header } from './components';
 import { useNavigate } from 'react-router-dom';
 import {
     FiCpu,

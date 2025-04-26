@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ProcessVisualization, GanttBar } from '../../pages/General';
+import ProcessVisualization from './ProcessVisualization';
+import GanttBar from './GanttBar';
 
 export default function VisualizationArea({
     ganttChart,
