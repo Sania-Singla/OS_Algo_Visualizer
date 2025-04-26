@@ -7,11 +7,11 @@ export default function Header() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="px-4 pt-2 pb-10"
+            className="px-4 pt-2 pb-6 sm:pb-10"
         >
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-4xl py-1 font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
+            <div className="flex flex-col sm:flex-row gap-6 justify-between text-center items-center">
+                <div className="w-full flex flex-col items-center sm:items-start">
+                    <h1 className="text-3xl lg:text-4xl py-1 font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-cyan-400">
                         Algorithm Visualizer
                     </h1>
                     <p className="text-gray-400 mt-2">
