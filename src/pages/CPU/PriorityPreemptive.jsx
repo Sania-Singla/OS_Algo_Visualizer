@@ -1,0 +1,146 @@
+import { useState, useEffect, useRef } from 'react';
+import { PROCESSES } from '../../constants/processes';
+import { ControlPanel, VisualizationArea } from '../../pages/General';
+
+export default function PriorityPreemptive() {
+    const [processes, setProcesses] = useState(PROCESSES);
+    const [ganttChart, setGanttChart] = useState([]);
+    const [currentTime, setCurrentTime] = useState(0);
+    const [isRunning, setIsRunning] = useState(false);
+    const [speed, setSpeed] = useState(1);
+    const [stats, setStats] = useState({
+        totalProcesses: PROCESSES.length,
+        completedProcesses: 0,
+        avgWaitTime: 0,
+        avgTurnaroundTime: 0,
+    });
+    const animationRef = useRef();
+
+    const executeScheduler = () => {
+        const updatedProcesses = [...processes];
+                const arrivedProcesses = updatedProcesses.filter(
+            p => p.arrivalTime <= currentTime && p.remainingTime > 0
+        );
+
+        // Check if all processes are completed
+        if (updatedProcesses.every(p => p.remainingTime === 0)) {
+            setIsRunning(false);
+            return;
+        }
+
+        // If no processes arrived, increment time
+        if (arrivedProcesses.length === 0) {
+            setGanttChart(prev => [
+                ...prev,
+                { isIdle: true, start: currentTime, end: currentTime + 1 }
+            ]);
+            setCurrentTime(prev => prev + 1);
+            return;
+        }
+
+        // Find process with highest priority (lowest priority number)
+        const currentProcess = arrivedProcesses.reduce((prev, curr) => 
+            prev.priority < curr.priority ? prev : curr
+        );
+
+        // Update waiting times for other arrived processes
+        const updatedWithWaitingTimes = updatedProcesses.map(p => {
+            if (p.pid !== currentProcess.pid && 
+                p.arrivalTime <= currentTime && 
+                p.remainingTime > 0) {
+                return { ...p, waitingTime: p.waitingTime + 1 };
+            }
+            return p;
+        });
+
+        // Update Gantt chart
+        setGanttChart(prev => [
+            ...prev,
+            {
+                pid: currentProcess.pid,
+                start: currentTime,
+                end: currentTime + 1,
+                isIdle: false
+            }
+        ]);
+
+        // Execute current process for 1 time unit (preemptive)
+        const newProcesses = updatedWithWaitingTimes.map(p => {
+            if (p.pid === currentProcess.pid) {
+                return { ...p, remainingTime: p.remainingTime - 1 };
+            }
+            return p;
+        });
+
+        setProcesses(newProcesses);
+
+        // Update statistics if process completed
+        if (currentProcess.remainingTime === 1) {
+            const completedProcesses = newProcesses.filter(
+                p => p.remainingTime === 0
+            );
+            const countCompleted = completedProcesses.length;
+
+            if (countCompleted > 0) {
+                const totalWaitTime = completedProcesses.reduce(
+                    (sum, p) => sum + p.waitingTime, 0
+                );
+                
+                const totalTurnaroundTime = completedProcesses.reduce(
+                    (sum, p) => sum + (p.waitingTime + p.burstTime), 0
+                );
+
+                setStats({
+                    totalProcesses: newProcesses.length,
+                    completedProcesses: countCompleted,
+                    avgWaitTime: parseFloat((totalWaitTime / countCompleted).toFixed(2)),
+                    avgTurnaroundTime: parseFloat((totalTurnaroundTime / countCompleted).toFixed(2)),
+                });
+            }
+        }
+
+        setCurrentTime(prev => prev + 1);
+    };
+
+    useEffect(() => {
+        if (isRunning) {
+            animationRef.current = setTimeout(executeScheduler, 1000 / speed);
+        }
+        return () => clearTimeout(animationRef.current);
+    }, [isRunning, currentTime, processes, speed]);
+
+    return (
+        <div className="px-10 py-8">
+            <div className="text-center mb-8">
+                <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-2">
+                    Priority (Preemptive) Scheduling
+                </h1>
+                <p className="text-gray-600">
+                    Higher priority processes can interrupt lower priority ones
+                </p>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-8">
+                <ControlPanel
+                    speed={speed}
+                    setSpeed={setSpeed}
+                    isRunning={isRunning}
+                    setIsRunning={setIsRunning}
+                    processes={processes}
+                    stats={stats}
+                    setStats={setStats}
+                    setProcesses={setProcesses}
+                    setCurrentTime={setCurrentTime}
+                    setGanttChart={setGanttChart}
+                    currentTime={currentTime}
+                    animationRef={animationRef}
+                />
+                <VisualizationArea
+                    ganttChart={ganttChart}
+                    processes={processes}
+                    currentTime={currentTime}
+                />
+            </div>
+        </div>
+    );
+}
