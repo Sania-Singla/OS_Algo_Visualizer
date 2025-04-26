@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ControlPanel, VisualizationArea } from '../../pages/General';
 
 export default function SRTF() {
-    const [processes, setProcesses] = useState(processes);
+    const [processes, setProcesses] = useState([]);
     const [ganttChart, setGanttChart] = useState([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);

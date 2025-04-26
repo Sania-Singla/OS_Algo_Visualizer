@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { ControlPanel, VisualizationArea } from '../../pages/General';
 
 export default function SJF() {
-    const [processes, setProcesses] = useState(processes);
+    const [processes, setProcesses] = useState([]);
     const [ganttChart, setGanttChart] = useState([]);
     const [currentTime, setCurrentTime] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
@@ -116,7 +116,7 @@ export default function SJF() {
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400 mb-2">
                     Shortest Job First (Non-Preemptive) Scheduling
-                    </h1>
+                </h1>
                 <p className="text-gray-400">
                     Watch processes get impatient as they wait!
                 </p>

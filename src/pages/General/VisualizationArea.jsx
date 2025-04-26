@@ -18,11 +18,18 @@ export default function VisualizationArea({
         <div className="w-full lg:w-2/3 space-y-6">
             <div className="flex flex-col md:flex-row gap-6">
                 {/* Scheduled processes */}
-                <div className="h-full min-w-1/3 sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
-                    <h3 className="font-medium text-lg mb-3 text-gray-100">
+                <div className="min-w-1/3 h-full bg-gray-900 p-6 rounded-xl border border-gray-700 shadow-sm">
+                    <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800 dark:text-gray-100">
+                        <svg
+                            className="w-5 h-5 mr-2 text-purple-500"
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                        >
+                            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
                         Scheduled Processes
-                    </h3>
-                    <div className="space-y-2">
+                    </h2>
+                    <div className="space-y-2 h-full">
                         {processes.length > 0 ? (
                             processes
                                 .filter((p) => p.remainingTime > 0)
@@ -63,7 +70,7 @@ export default function VisualizationArea({
                                     </div>
                                 ))
                         ) : (
-                            <p className="text-gray-500">
+                            <p className="text-gray-500 italic">
                                 No scheduled processes
                             </p>
                         )}
