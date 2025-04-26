@@ -18,7 +18,7 @@ export default function VisualizationArea({
         <div className="w-full lg:w-2/3 space-y-6">
             <div className="flex flex-col md:flex-row gap-6">
                 {/* Scheduled processes */}
-                <div className="min-w-1/3 h-full bg-gray-900 p-6 rounded-xl border border-gray-700 shadow-sm">
+                <div className="min-w-fit max-w-1/4 h-full bg-gray-900 p-6 rounded-xl border border-gray-700 shadow-sm">
                     <h2 className="text-xl font-semibold mb-4 flex items-center text-gray-800 dark:text-gray-100">
                         <svg
                             className="w-5 h-5 mr-2 text-purple-500"
@@ -31,44 +31,39 @@ export default function VisualizationArea({
                     </h2>
                     <div className="space-y-2 h-full">
                         {processes.length > 0 ? (
-                            processes
-                                .filter((p) => p.remainingTime > 0)
-                                .map((p) => (
-                                    <div
-                                        key={p.pid}
-                                        className={`flex justify-between items-center p-3 rounded-lg border transition-all
+                            processes.map((p) => (
+                                <div
+                                    key={p.pid}
+                                    className={`flex justify-between items-center p-3 rounded-lg border transition-all
                                         ${p.isExecuting ? 'border-blue-500 bg-blue-900' : 'border-gray-700'}`}
+                                >
+                                    <span
+                                        className={`font-medium ${p.isExecuting ? 'text-blue-400' : 'text-gray-300'}`}
                                     >
-                                        <span
-                                            className={`font-medium ${p.isExecuting ? 'text-blue-400' : 'text-gray-300'}`}
-                                        >
-                                            P{p.pid}
+                                        P{p.pid}
+                                    </span>
+                                    <div className="flex items-center space-x-4 ml-4 text-nowrap">
+                                        <span className="text-sm text-gray-400">
+                                            <span className="font-medium">
+                                                AT:
+                                            </span>{' '}
+                                            {p.arrivalTime}
                                         </span>
-                                        <div className="flex items-center space-x-4">
-                                            <span className="text-sm text-gray-400">
-                                                <span className="font-medium">
-                                                    AT:
-                                                </span>{' '}
-                                                {p.arrivalTime}
-                                            </span>
-                                            <span className="text-sm text-gray-400">
-                                                <span className="font-medium">
-                                                    RT:
-                                                </span>{' '}
-                                                {p.remainingTime}/{p.burstTime}
-                                            </span>
-                                            <span className="text-sm text-gray-400">
-                                                <span className="font-medium">
-                                                    WT:
-                                                </span>{' '}
-                                                {p.waitingTime}
-                                            </span>
-                                            {p.isExecuting && (
-                                                <span className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></span>
-                                            )}
-                                        </div>
+                                        <span className="text-sm text-gray-400">
+                                            <span className="font-medium">
+                                                RT:
+                                            </span>{' '}
+                                            {p.remainingTime}/{p.burstTime}
+                                        </span>
+                                        <span className="text-sm text-gray-400">
+                                            <span className="font-medium">
+                                                WT:
+                                            </span>{' '}
+                                            {p.waitingTime}
+                                        </span>
                                     </div>
-                                ))
+                                </div>
+                            ))
                         ) : (
                             <p className="text-gray-500 italic">
                                 No scheduled processes
@@ -89,14 +84,16 @@ export default function VisualizationArea({
                         </svg>
                         Process Queue (Current Time: {currentTime}s)
                     </h2>
-                    <div className="flex flex-wrap justify-center">
+                    <div className="flex flex-wrap justify-center w-full">
                         {arrivedProcesses.length > 0 ? (
-                            arrivedProcesses.map((process) => (
-                                <ProcessVisualization
-                                    key={process.pid}
-                                    process={process}
-                                />
-                            ))
+                            arrivedProcesses
+                                .sort((a, b) => a.arrivalTime - b.arrivalTime)
+                                .map((process) => (
+                                    <ProcessVisualization
+                                        key={process.pid}
+                                        process={process}
+                                    />
+                                ))
                         ) : (
                             <div className="text-gray-400 dark:text-gray-500 italic">
                                 No processes have arrived yet
