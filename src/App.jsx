@@ -222,7 +222,7 @@ export default function App() {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white px-10 py-8">
             <Header />
 
-            <main className="max-w-6xl mx-auto">
+            <main className="w-full px-4">
                 <AlgorithmTabs
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
