@@ -143,7 +143,29 @@ export default function RoundRobin() {
                 </p>
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8">
+            {/* Quantum Control Panel in Top Right */}
+            <div className="items-center lg:absolute lg:top-10 lg:right-6 flex flex-col gap-1">
+                <label
+                    className="text-gray-300 text-lg font-medium"
+                    htmlFor="arrival-time"
+                >
+                    Quantum Size
+                </label>
+                <input
+                    id="arrival-time"
+                    type="number"
+                    placeholder="Enter Quantum"
+                    value={quantum}
+                    onChange={(e) =>
+                        setQuantum(
+                            e.target.value >= 1 ? parseInt(e.target.value) : 1
+                        )
+                    }
+                    className="w-fit px-3 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-8 mt-16">
                 <ControlPanel
                     speed={speed}
                     setSpeed={setSpeed}
