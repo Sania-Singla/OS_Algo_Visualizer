@@ -219,7 +219,7 @@ export default function App() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white px-10 py-8">
             <Header />
 
             <main className="max-w-6xl mx-auto">

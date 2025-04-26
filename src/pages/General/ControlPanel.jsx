@@ -14,8 +14,9 @@ export default function ControlPanel({
     currentTime,
     animationRef,
 }) {
-    const [autoGenerate, setAutoGenerate] = useState(false);
-    const [autoGenerateInterval, setAutoGenerateInterval] = useState(5);
+    const [arrivalTime, setArrivalTime] = useState('');
+    const [burstTime, setBurstTime] = useState('');
+    const [priority, setPriority] = useState('');
     const [nextPid, setNextPid] = useState(
         processes.length > 0 ? Math.max(...processes.map((p) => p.pid)) + 1 : 1
     );
@@ -41,7 +42,7 @@ export default function ControlPanel({
     const generateRandomProcess = (currentTime, nextPid) => {
         const burstTime = Math.floor(Math.random() * 5) + 1; // 1-5
         const priority = Math.floor(Math.random() * 3) + 1; // 1-3
-        const arrivalTime = currentTime + Math.floor(Math.random() * 2); // currentTime or currentTime + 1
+        const arrivalTime = currentTime + Math.floor(Math.random() * 10);
 
         return {
             pid: nextPid,
@@ -65,28 +66,50 @@ export default function ControlPanel({
             }));
 
             setNextPid((prevPid) => prevPid + 1);
-
-            console.log(newProcess);
             return updatedProcesses;
         });
     };
 
-    useEffect(() => {
-        if (autoGenerate && isRunning) {
-            autoGenRef.current = setTimeout(() => {
-                if (processes.length < 10) {
-                    addRandomProcess();
-                } else {
-                    clearTimeout(autoGenRef.current);
-                }
-            }, autoGenerateInterval * 1000);
+    const addManualProcess = () => {
+        if (arrivalTime === '' || burstTime === '' || priority === '') {
+            alert('Please fill all fields.');
+            return;
         }
-    }, [autoGenerate, isRunning, autoGenerateInterval, currentTime, nextPid]);
+
+        const newProcess = {
+            pid: nextPid,
+            arrivalTime: parseInt(arrivalTime),
+            burstTime: parseInt(burstTime),
+            priority: parseInt(priority),
+            remainingTime: parseInt(burstTime),
+            waitingTime: 0,
+            isExecuting: false,
+        };
+
+        setProcesses((prevProcesses) => {
+            const updatedProcesses = [...prevProcesses, newProcess];
+
+            setStats((prevStats) => ({
+                ...prevStats,
+                totalProcesses: updatedProcesses.length,
+            }));
+
+            setNextPid((prevPid) => prevPid + 1);
+
+            console.log(newProcess);
+            return updatedProcesses;
+        });
+
+        // Reset form
+        setArrivalTime('');
+        setBurstTime('');
+        setPriority('');
+    };
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:block gap-4 w-full lg:w-1/3 bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-700">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 space-y-6 lg:block w-full lg:w-1/3 bg-gray-900 p-6 rounded-2xl shadow-xl border border-gray-700">
             {/* Control Panel */}
-            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+            <div className="h-fit sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-gray-100 flex items-center">
                         <svg
@@ -126,7 +149,7 @@ export default function ControlPanel({
                 <div className="flex gap-3 mb-6 justify-evenly flex-col lg:flex-row">
                     <button
                         onClick={() => setIsRunning(!isRunning)}
-                        className={`cursor-pointer w-full text-white font-medium shadow-md hover:shadow-lg rounded-lg h-[50px] flex items-center justify-center transition-all
+                        className={`cursor-pointer w-full text-white font-medium shadow-md hover:shadow-lg rounded-lg h-[40px] flex items-center justify-center transition-all
                         ${isRunning ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-green-600 to-green-700'}`}
                     >
                         <svg
@@ -155,7 +178,7 @@ export default function ControlPanel({
                     </button>
                     <button
                         onClick={resetSimulation}
-                        className="cursor-pointer w-full h-[50px] bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                        className="cursor-pointer w-full h-[40px] bg-gradient-to-r from-gray-600 to-gray-700 hover:from-gray-700 hover:to-gray-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
                     >
                         <svg
                             className="size-5 mr-2"
@@ -175,7 +198,7 @@ export default function ControlPanel({
                 </div>
             </div>
 
-            <div className="h-fit sm:h-full lg:h-fit mb-6 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+            <div className="h-fit sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
                 <h3 className="font-medium text-lg mb-3 flex items-center text-gray-100">
                     <svg
                         className="w-5 h-5 mr-2 text-blue-400"
@@ -191,9 +214,68 @@ export default function ControlPanel({
                     Process Generation
                 </h3>
 
+                <div className="h-fit mb-6 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+                    <h3 className="font-medium text-lg mb-3 flex items-center text-gray-100">
+                        Manual Process Creation
+                    </h3>
+
+                    <div className="flex flex-col gap-3 mb-4">
+                        <label
+                            className="text-gray-300 text-sm font-medium"
+                            htmlFor="arrival-time"
+                        >
+                            Arrival Time
+                        </label>
+                        <input
+                            id="arrival-time"
+                            type="number"
+                            placeholder="Arrival Time"
+                            value={arrivalTime}
+                            onChange={(e) => setArrivalTime(e.target.value)}
+                            className="px-3 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+
+                        <label
+                            className="text-gray-300 text-sm font-medium"
+                            htmlFor="burst-time"
+                        >
+                            Burst Time
+                        </label>
+                        <input
+                            id="burst-time"
+                            type="number"
+                            placeholder="Burst Time"
+                            value={burstTime}
+                            onChange={(e) => setBurstTime(e.target.value)}
+                            className="px-3 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+
+                        <label
+                            className="text-gray-300 text-sm font-medium"
+                            htmlFor="priority"
+                        >
+                            Priority
+                        </label>
+                        <input
+                            id="priority"
+                            type="number"
+                            placeholder="Priority"
+                            value={priority}
+                            onChange={(e) => setPriority(e.target.value)}
+                            className="px-3 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <button
+                        onClick={addManualProcess}
+                        className="cursor-pointer w-full mb-3 py-2 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                    >
+                        Add Manual Process
+                    </button>
+                </div>
                 <button
                     onClick={addRandomProcess}
-                    className="cursor-pointer w-full mb-3 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
+                    className="cursor-pointer w-full mb-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg text-white font-medium shadow-md hover:shadow-lg flex items-center justify-center"
                 >
                     <svg
                         className="w-5 h-5 mr-2"
@@ -210,50 +292,6 @@ export default function ControlPanel({
                     </svg>
                     Add Random Process
                 </button>
-
-                <div className="flex items-center justify-between">
-                    <label className="flex items-center cursor-pointer">
-                        <div className="relative">
-                            <input
-                                type="checkbox"
-                                className="sr-only"
-                                checked={autoGenerate}
-                                onChange={() => setAutoGenerate(!autoGenerate)}
-                            />
-                            <div
-                                className={`block w-10 h-6 rounded-full ${autoGenerate ? 'bg-blue-600' : 'bg-gray-600'}`}
-                            ></div>
-                            <div
-                                className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition ${autoGenerate ? 'transform translate-x-4' : ''}`}
-                            ></div>
-                        </div>
-                        <div className="ml-3 text-sm font-medium text-gray-300">
-                            Auto Generate
-                        </div>
-                    </label>
-
-                    {autoGenerate && (
-                        <div className="flex items-center">
-                            <span className="text-sm mr-2 text-gray-400">
-                                Every:
-                            </span>
-                            <select
-                                value={autoGenerateInterval}
-                                onChange={(e) =>
-                                    setAutoGenerateInterval(
-                                        parseInt(e.target.value)
-                                    )
-                                }
-                                className="cursor-pointer text-sm border rounded-md px-2 py-1 bg-gray-700 text-gray-100"
-                            >
-                                <option value={3}>3s</option>
-                                <option value={5}>5s</option>
-                                <option value={8}>8s</option>
-                                <option value={10}>10s</option>
-                            </select>
-                        </div>
-                    )}
-                </div>
             </div>
 
             <div className="h-fit sm:h-full lg:h-fit mb-6 bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
