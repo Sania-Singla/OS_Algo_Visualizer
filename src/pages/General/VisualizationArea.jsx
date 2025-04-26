@@ -16,9 +16,9 @@ export default function VisualizationArea({
 
     return (
         <div className="w-full lg:w-2/3 space-y-6">
-            <div className="flex gap-6">
+            <div className="flex flex-col md:flex-row gap-6">
                 {/* Scheduled processes */}
-                <div className="min-w-1/3 h-fit sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
+                <div className="h-full min-w-1/3 sm:h-full lg:h-fit bg-gray-800 p-4 rounded-xl border border-gray-700 shadow-sm">
                     <h3 className="font-medium text-lg mb-3 text-gray-100">
                         Scheduled Processes
                     </h3>
