@@ -50,31 +50,52 @@ export default function DiskScheduler({ algorithm, algoType }) {
 
                 <div className="bg-gray-800 p-4 rounded-lg">
                     <h3 className="text-lg font-bold mb-2">Movement History</h3>
-                    <div className="max-h-40 overflow-y-auto">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-gray-700">
-                                    <th className="text-left py-2">Step</th>
-                                    <th className="text-left py-2">Position</th>
-                                    <th className="text-left py-2">Action</th>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full bg-gray-900 rounded-lg overflow-hidden">
+                            <thead className="bg-gray-800">
+                                <tr className="divide-x divide-gray-700">
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Step
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Position
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                                        Action
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody className="divide-y divide-gray-700">
                                 {headMovement.map((pos, idx) => (
                                     <tr
                                         key={idx}
-                                        className="border-b border-gray-700"
+                                        className="divide-x divide-gray-700 hover:bg-gray-800 transition-colors duration-150"
                                     >
-                                        <td className="py-2">{idx + 1}</td>
-                                        <td className="py-2">{pos}</td>
-                                        <td className="py-2">
-                                            {idx === 0
-                                                ? 'Start'
-                                                : pos === headMovement[idx - 1]
-                                                  ? 'Processing'
-                                                  : pos > headMovement[idx - 1]
-                                                    ? 'Moving right'
-                                                    : 'Moving left'}
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-100">
+                                            {idx + 1}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-300">
+                                            {pos}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                            {idx === 0 ? (
+                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-blue-500 text-blue-100">
+                                                    Start
+                                                </span>
+                                            ) : pos ===
+                                              headMovement[idx - 1] ? (
+                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-purple-500 text-purple-100">
+                                                    Processing
+                                                </span>
+                                            ) : pos > headMovement[idx - 1] ? (
+                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-500 text-green-100">
+                                                    Moving right →
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-500 text-red-100">
+                                                    Moving left ←
+                                                </span>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
