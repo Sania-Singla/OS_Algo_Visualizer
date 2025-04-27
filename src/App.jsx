@@ -108,16 +108,16 @@ const DISK_ALGOS = [
 const MEMORY_ALGOS = [
     {
         title: 'Page Replacement',
-        description: 'FIFO, LRU, OPT algorithms visualization',
-        icon: <FiCode size={24} />,
-        color: 'from-lime-500 to-green-600',
-        path: '/memory/lru',
+        description: 'Clock Algorithm, uses a circular list',
+        icon: <FiClock size={24} />,
+        color: 'from-rose-500 to-red-600',
+        path: '/memory/clock',
     },
     {
         title: 'Memory Allocation',
         description: 'First-fit, Best-fit, Worst-fit strategies',
         icon: <FiCpu size={24} />,
-        color: 'from-amber-500 to-orange-600',
+        color: 'from-blue-500 to-blue-600',
         path: '/memory/opr',
     },
 ];
