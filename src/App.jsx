@@ -170,12 +170,12 @@ const AlgorithmTabs = ({ activeTab, setActiveTab }) => {
     ];
 
     return (
-        <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-8">
+        <div className="flex flex-wrap md:justify-start justify-center gap-4 mb-10">
             {tabs.map((tab) => (
                 <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`cursor-pointer relative px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
+                    className={`cursor-pointer relative px-3 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
                         activeTab === tab.id
                             ? 'text-white'
                             : 'text-gray-400 hover:text-gray-300'
@@ -222,7 +222,7 @@ export default function App() {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white px-6 md:px-10 py-8">
             <Header />
 
-            <main className="px-4 overflow-auto">
+            <main className="overflow-auto">
                 <AlgorithmTabs
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}

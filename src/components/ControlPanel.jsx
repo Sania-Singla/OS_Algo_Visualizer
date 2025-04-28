@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
 export default function ControlPanel({
     speed,
@@ -14,6 +15,7 @@ export default function ControlPanel({
     currentTime,
     animationRef,
 }) {
+    const { pathname } = useLocation();
     const [arrivalTime, setArrivalTime] = useState('');
     const [burstTime, setBurstTime] = useState('');
     const [priority, setPriority] = useState('');
@@ -68,16 +70,18 @@ export default function ControlPanel({
     };
 
     const addManualProcess = () => {
-        if (arrivalTime === '' || burstTime === '' || priority === '') {
-            alert('Please fill all fields.');
-            return;
+        if (arrivalTime === '' || burstTime === '') {
+            if (pathname.includes('priority') && priority === '') {
+                alert('Please fill all fields.');
+                return;
+            }
         }
 
         const newProcess = {
             pid: nextPid,
             arrivalTime: parseInt(arrivalTime),
             burstTime: parseInt(burstTime),
-            priority: parseInt(priority),
+            priority: parseInt(priority || 1),
             remainingTime: parseInt(burstTime),
             waitingTime: 0,
             isExecuting: false,
@@ -150,7 +154,7 @@ export default function ControlPanel({
                         ${isRunning ? 'bg-gradient-to-r from-red-600 to-red-700' : 'bg-gradient-to-r from-green-600 to-green-700'}`}
                     >
                         <svg
-                            className="size-11"
+                            className={isRunning ? 'size-5 mr-2' : 'size-11'}
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -159,7 +163,7 @@ export default function ControlPanel({
                                 <path
                                     strokeLinecap="round"
                                     strokeLinejoin="round"
-                                    strokeWidth={1}
+                                    strokeWidth={2}
                                     d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                 />
                             ) : (
