@@ -47,7 +47,7 @@ export default function ProcessVisualization({ process }) {
 
     return (
         <div
-            className={`relative w-32 h-46 p-3 m-3 rounded-xl shadow-lg transition-all duration-300 transform
+            className={`relative w-32 h-46 p-3 m-3 rounded-xl bg-transparent shadow-lg transition-all duration-300 transform
                 ${
                     isExecuting
                         ? 'bg-gradient-to-br from-blue-100 to-blue-50 dark:from-blue-500 dark:to-blue-400 scale-105 ring-2 ring-blue-400 dark:ring-blue-300'
