@@ -5,6 +5,7 @@ const ClockAlgorithm = () => {
     const [frames, setFrames] = useState([]);
     const [pages, setPages] = useState([]);
     const [handPosition, setHandPosition] = useState(0);
+    const [moveCount, setMoveCount] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
     const [speed, setSpeed] = useState(1);
     const [stats, setStats] = useState({ hits: 0, misses: 0 });
@@ -13,7 +14,7 @@ const ClockAlgorithm = () => {
     const [activeRequest, setActiveRequest] = useState(null);
     const [swapAnimation, setSwapAnimation] = useState(null);
     const [settings, setSettings] = useState({
-        frameCount: 4,
+        frameCount: 3,
         initialized: false,
     });
     const [pageInput, setPageInput] = useState('');
@@ -45,6 +46,7 @@ const ClockAlgorithm = () => {
         setFrames(newFrames);
         setPages([]);
         setHandPosition(0);
+        setMoveCount(0);
         setStats({ hits: 0, misses: 0 });
         setAccessHistory([]);
         setAlgorithmSteps([]);
@@ -54,8 +56,6 @@ const ClockAlgorithm = () => {
 
     // Add a new page
     const addPage = () => {
-        if (pages.length >= 8) return; // Limit to 8 pages for better visualization
-
         const newPage = {
             id: pages.length + 1,
             content: `Page ${pages.length + 1}`,
@@ -128,16 +128,18 @@ const ClockAlgorithm = () => {
         }, 300);
     };
 
+    // Update the sleep function to respect speed
+    const sleep = (ms) =>
+        new Promise((resolve) => setTimeout(resolve, ms / speed));
+
+    // Update the replacePage function to use the speed-adjusted sleep
     const replacePage = async (newPageId) => {
         let updatedFrames = [...frames];
         let steps = [
             `Miss: Page ${newPageId} not found, starting replacement from frame ${handPosition}`,
         ];
 
-        const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
         const newPage = pages.find((p) => p.id === newPageId);
-
         let current = handPosition;
 
         while (true) {
@@ -149,7 +151,7 @@ const ClockAlgorithm = () => {
                 )
             );
 
-            await sleep(500); // Small delay for animation
+            await sleep(500); // This will now respect the speed setting
 
             const frame = updatedFrames[current];
 
@@ -158,14 +160,21 @@ const ClockAlgorithm = () => {
                     `Frame ${current} has reference bit 0 - Replacing page ${frame.page?.id ?? 'Empty'}`
                 );
 
+                const pos = getClockPosition(current, frames.length);
+
                 // Animate old page out
                 setSwapAnimation({
                     type: 'out',
                     frameIndex: current,
                     page: frame.page,
                     color: frame.page?.color || 'bg-gray-400',
+                    startX: pos.x,
+                    startY: pos.y,
                 });
                 await sleep(400);
+
+                setSwapAnimation(null);
+                await sleep(100);
 
                 // Animate new page in
                 setSwapAnimation({
@@ -173,6 +182,8 @@ const ClockAlgorithm = () => {
                     frameIndex: current,
                     page: newPage,
                     color: newPage.color,
+                    endX: pos.x,
+                    endY: pos.y,
                 });
                 await sleep(400);
 
@@ -186,6 +197,7 @@ const ClockAlgorithm = () => {
                 setFrames([...updatedFrames]);
                 setSwapAnimation(null);
                 setHandPosition((current + 1) % frames.length);
+                setMoveCount((prev) => prev + 1);
                 setActiveRequest(null);
                 break;
             } else {
@@ -193,12 +205,15 @@ const ClockAlgorithm = () => {
                     `Frame ${current} has reference bit 1 - Second Chance given!`
                 );
 
-                // Show second chance animation
+                const pos = getClockPosition(current, frames.length);
+
                 setSwapAnimation({
                     type: 'secondChance',
                     frameIndex: current,
                     page: frame.page,
                     color: frame.page?.color || 'bg-yellow-500',
+                    x: pos.x,
+                    y: pos.y,
                 });
 
                 await sleep(400);
@@ -209,30 +224,29 @@ const ClockAlgorithm = () => {
 
                 current = (current + 1) % frames.length;
                 setHandPosition(current);
+                setMoveCount((prev) => prev + 1);
             }
         }
 
         setAlgorithmSteps((prev) => [...prev, ...steps]);
     };
 
-    // Auto-run simulation
-    useEffect(() => {
-        let timer;
-        if (isRunning && pages.length > 0) {
-            timer = setTimeout(() => {
-                const randomPage =
-                    pages[Math.floor(Math.random() * pages.length)].id;
-                accessPage(randomPage);
-            }, 1500 / speed);
-        }
-        return () => clearTimeout(timer);
-    }, [isRunning, speed, pages, frames, handPosition]);
+
+    // Update the clock hand transition duration
+    <div
+        className="absolute top-1/2 left-1/2 w-1/2 h-0.5 bg-orange-500 origin-left z-0"
+        style={{
+            transform: `rotate(${moveCount * (360 / frames.length) - 90}deg)`,
+            transition: `transform ${0.5 / speed}s ease-in-out`, // Speed-adjusted transition
+        }}
+    />;
 
     // Calculate positions for clock visualization
     const getClockPosition = (index, total) => {
-        const angle = index * (360 / total) - 90;
-        const x = 50 + 40 * Math.cos((angle * Math.PI) / 180);
-        const y = 50 + 40 * Math.sin((angle * Math.PI) / 180);
+        const angle = index * (360 / total) - 90; // Start from top (-90 degrees)
+        const radius = 40; // Percentage from center
+        const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
+        const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
         return { x, y, angle };
     };
 
@@ -290,13 +304,6 @@ const ClockAlgorithm = () => {
                                 {/* Start, Reset, Add Page */}
                                 <div className="flex gap-2">
                                     <button
-                                        onClick={() => setIsRunning(!isRunning)}
-                                        className={`px-3 py-2 rounded-lg font-medium text-sm ${isRunning ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'}`}
-                                        disabled={pages.length === 0}
-                                    >
-                                        {isRunning ? '⏸️ Pause' : '▶️ Start'}
-                                    </button>
-                                    <button
                                         onClick={initializeSimulation}
                                         className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg font-medium text-sm"
                                     >
@@ -304,7 +311,6 @@ const ClockAlgorithm = () => {
                                     </button>
                                     <button
                                         onClick={addPage}
-                                        disabled={pages.length >= 8}
                                         className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium text-sm disabled:opacity-50"
                                     >
                                         ➕ Add
@@ -346,7 +352,9 @@ const ClockAlgorithm = () => {
                                         >
                                             <option value={0.5}>0.5x</option>
                                             <option value={1}>1x</option>
+                                            <option value={1.5}>1.5x</option>
                                             <option value={2}>2x</option>
+                                            <option value={2.5}>2.5x</option>
                                             <option value={3}>3x</option>
                                         </select>
                                     </div>
@@ -394,81 +402,84 @@ const ClockAlgorithm = () => {
                         {/* Visualization */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                             {/* Clock Visualization */}
-                            <div className="bg-gray-800 rounded-xl p-4 shadow-md">
-                                <h2 className="text-lg font-semibold mb-3">
-                                    Clock Visualization (Hand at: {handPosition}
-                                    )
-                                </h2>
-
-                                <div className="relative w-full aspect-square max-w-xs mx-auto">
-                                    {/* Clock Face */}
-                                    <div className="absolute inset-0 rounded-full border-2 border-blue-500/50 flex items-center justify-center">
-                                        {/* Frames */}
-                                        {frames.map((frame, index) => {
-                                            const pos = getClockPosition(
-                                                index,
-                                                frames.length
-                                            );
-                                            return (
-                                                <div
-                                                    key={frame.id}
-                                                    className={`absolute w-12 h-12 rounded-md flex flex-col items-center justify-center text-[10px] transition-all duration-300 z-10
-                ${frame.page ? frame.page.color : 'bg-gray-700'}
-                ${frame.isActive ? 'ring-2 ring-yellow-400 scale-105' : ''}
-                ${handPosition === index ? 'ring-2 ring-orange-400' : ''}`}
-                                                    style={{
-                                                        left: `${pos.x}%`,
-                                                        top: `${pos.y}%`,
-                                                        transform: `translate(-50%, -50%) rotate(${pos.angle + 90}deg)`,
-                                                    }}
-                                                >
-                                                    {frame.page
-                                                        ? frame.page.content
-                                                        : 'Empty'}
-                                                    <div className="mt-0.5 text-[9px] bg-black/30 px-1 rounded">
-                                                        R:{frame.referenceBit}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-
-                                        {/* Clock Hand */}
-                                        <div
-                                            className="absolute top-1/2 left-1/2 w-1/2 h-0.5 bg-orange-500 origin-left z-0 transition-transform duration-500"
-                                            style={{
-                                                transform: `rotate(${handPosition * (360 / frames.length)}deg)`,
-                                            }}
-                                        />
-                                        <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-orange-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-0" />
-                                    </div>
-
+                            <div className="relative w-full aspect-square max-w-xs mx-auto">
+                                {/* Clock Face */}
+                                <div className="absolute inset-0 rounded-full border-2 border-blue-500/50 flex items-center justify-center">
                                     {/* Swap Animations */}
                                     {swapAnimation && (
                                         <div
-                                            className={`absolute w-10 h-10 rounded-full flex items-center justify-center text-white font-bold z-20 shadow-lg transition-all duration-500
-            ${swapAnimation.color}`}
+                                            className={`absolute w-12 h-12 rounded-md flex flex-col items-center justify-center text-[10px] z-50 transition-all duration-400 ${
+                                                swapAnimation.color
+                                            } ${
+                                                swapAnimation.type === 'out'
+                                                    ? 'animate-ping opacity-50' // Outgoing page with fade out effect
+                                                    : swapAnimation.type ===
+                                                        'secondChance'
+                                                      ? 'animate-bounce scale-110' // Emphasize second chance
+                                                      : ''
+                                            }`}
                                             style={{
-                                                left:
-                                                    swapAnimation.type === 'out'
-                                                        ? `calc(50% + ${40 * Math.cos(((swapAnimation.frameIndex * (360 / frames.length) - 90) * Math.PI) / 180)}% - 20px)`
-                                                        : '50%',
-                                                top:
-                                                    swapAnimation.type === 'out'
-                                                        ? `calc(50% + ${40 * Math.sin(((swapAnimation.frameIndex * (360 / frames.length) - 90) * Math.PI) / 180)}% - 20px)`
-                                                        : '50%',
-                                                transform:
-                                                    swapAnimation.type === 'out'
-                                                        ? 'translate(80px, 40px) scale(0.7)'
-                                                        : `translate(
-                  calc(${40 * Math.cos(((swapAnimation.frameIndex * (360 / frames.length) - 90) * Math.PI) / 180)}% - 20px),
-                  calc(${40 * Math.sin(((swapAnimation.frameIndex * (360 / frames.length) - 90) * Math.PI) / 180)}% - 20px)
-                ) scale(1)`,
+                                                left: `${swapAnimation.type === 'in' ? '50%' : swapAnimation.startX || swapAnimation.x}%`,
+                                                top: `${swapAnimation.type === 'in' ? '50%' : swapAnimation.startY || swapAnimation.y}%`,
+                                                transform: `translate(-50%, -50%) ${
+                                                    swapAnimation.type === 'in'
+                                                        ? `translate(${swapAnimation.endX - 50}%, ${swapAnimation.endY - 50}%) scale(1.2)` // Incoming page zoom effect
+                                                        : swapAnimation.type ===
+                                                            'out'
+                                                          ? 'scale(1.2)' // Outgoing page with zoom out effect
+                                                          : ''
+                                                }`,
                                             }}
                                         >
                                             {swapAnimation.page?.content ||
                                                 'Empty'}
+                                            {swapAnimation.type ===
+                                                'secondChance' && (
+                                                <div className="mt-0.5 text-[9px] bg-black/30 px-1 rounded">
+                                                    Second Chance!
+                                                </div>
+                                            )}
                                         </div>
                                     )}
+
+                                    {/* Frames */}
+                                    {frames.map((frame, index) => {
+                                        const pos = getClockPosition(
+                                            index,
+                                            frames.length
+                                        );
+                                        return (
+                                            <div
+                                                key={frame.id}
+                                                className={`absolute w-12 h-12 rounded-md flex flex-col items-center justify-center text-[10px] transition-all duration-300 z-10
+                        ${frame.page ? frame.page.color : 'bg-gray-700'}
+                        ${frame.isActive ? 'ring-2 ring-yellow-400 scale-105' : ''}
+                        ${handPosition === index ? 'ring-2 ring-orange-400' : ''}`}
+                                                style={{
+                                                    left: `${pos.x}%`,
+                                                    top: `${pos.y}%`,
+                                                    transform: `translate(-50%, -50%)`,
+                                                }}
+                                            >
+                                                {frame.page
+                                                    ? frame.page.content
+                                                    : 'Empty'}
+                                                <div className="mt-0.5 text-[9px] bg-black/30 px-1 rounded">
+                                                    R:{frame.referenceBit}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
+                                    {/* Clock Hand - Fixed positioning */}
+                                    <div
+                                        className="absolute top-1/2 left-1/2 w-1/2 h-0.5 bg-orange-500 origin-left z-0 transition-transform duration-500 ease-in-out"
+                                        style={{
+                                            transform: `rotate(${moveCount * (360 / frames.length) - 90}deg)`, // Add 90 to start at top (90 degrees)
+                                        }}
+                                    />
+
+                                    <div className="absolute top-1/2 left-1/2 w-3 h-3 bg-orange-500 rounded-full transform -translate-x-1/2 -translate-y-1/2 z-0" />
                                 </div>
                             </div>
 
