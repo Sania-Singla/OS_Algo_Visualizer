@@ -186,7 +186,7 @@ const AlgorithmTabs = ({ activeTab, setActiveTab }) => {
                     {activeTab === tab.id && (
                         <motion.div
                             layoutId="activeTab"
-                            className="absolute bottom-0 left-0 right-0 h-1 bg-blue-400 rounded-full"
+                            className="absolute bottom-0 left-0 right-2 h-1 bg-blue-400 rounded-full"
                             transition={{
                                 type: 'spring',
                                 bounce: 0.2,
