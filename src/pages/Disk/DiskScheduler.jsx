@@ -16,7 +16,7 @@ export default function DiskScheduler({ algorithm, algoType }) {
     }, [requests, head]);
 
     return (
-        <div className="px-6 py-8 min-h-screen bg-gray-900 text-gray-200">
+        <div className="px-6 md:px-10 py-8 min-h-screen bg-gray-900 text-gray-200">
             <h1 className="text-3xl font-bold text-center mb-8">
                 {algoType === 'FCFS' && 'First-Come, First-Served'}
                 {algoType === 'SSTF' && 'Shortest Seek Time First'}
