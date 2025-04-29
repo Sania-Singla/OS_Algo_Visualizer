@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Footer, Header } from './components';
@@ -118,7 +119,7 @@ const MEMORY_ALGOS = [
         description: 'First-fit, Best-fit, Worst-fit strategies',
         icon: <FiCpu size={24} />,
         color: 'from-blue-500 to-blue-600',
-        path: '/memory/opr',
+        path: '/memory/memory-visual',
     },
 ];
 
