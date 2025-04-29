@@ -19,7 +19,7 @@ import {
     Priority,
     PriorityPreemptive,
 } from './pages/CPU';
-import { LRU, OPR, ClockAlgorithm } from './pages/Memory';
+import { LRU, OPR, ClockAlgorithm, MemoryVisualiser } from './pages/Memory';
 import { Bankers } from './pages/DeadLock';
 import { DiningPhilosopher } from './pages/Sync';
 
@@ -60,6 +60,7 @@ const router = createBrowserRouter(
                 <Route path="lru" element={<LRU />} />
                 <Route path="opr" element={<OPR />} />
                 <Route path="clock" element={<ClockAlgorithm />} />
+                <Route path="memory-visual" element={<MemoryVisualiser />} />
             </Route>
 
             <Route path="/deadlock">
