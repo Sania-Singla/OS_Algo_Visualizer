@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-//Clock hand
+import { useState, useEffect } from 'react';
+
 const ClockAlgorithm = () => {
-    // Simulation state
     const [frames, setFrames] = useState([]);
     const [pages, setPages] = useState([]);
     const [handPosition, setHandPosition] = useState(0);
@@ -17,9 +16,7 @@ const ClockAlgorithm = () => {
         frameCount: 3,
         initialized: false,
     });
-    const [pageInput, setPageInput] = useState('');
 
-    // Colors for visualization
     const pageColors = [
         'bg-red-500',
         'bg-blue-500',
@@ -31,7 +28,6 @@ const ClockAlgorithm = () => {
         'bg-teal-500',
     ];
 
-    // Initialize simulation
     const initializeSimulation = () => {
         const newFrames = Array.from(
             { length: settings.frameCount },
@@ -54,8 +50,8 @@ const ClockAlgorithm = () => {
         setSettings({ ...settings, initialized: true });
     };
 
-    // Add a new page
     const addPage = () => {
+        if (pages.length >= 8) return;
         const newPage = {
             id: pages.length + 1,
             content: `Page ${pages.length + 1}`,
@@ -65,7 +61,6 @@ const ClockAlgorithm = () => {
         setPages([...pages, newPage]);
     };
 
-    // Access a page
     const accessPage = (pageNum) => {
         if (!settings.initialized) return;
 
@@ -251,8 +246,8 @@ const ClockAlgorithm = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white p-4">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen bg-gray-900 text-white px-6 md:px-10 py-8">
+            <div>
                 <h1 className="text-3xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                     Clock Page Replacement Algorithm
                 </h1>
@@ -549,11 +544,11 @@ const ClockAlgorithm = () => {
                         {/* Information panels */}
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {/* Access history */}
-                            <div className="bg-gray-800 rounded-xl p-6 shadow-lg h-64 overflow-hidden">
+                            <div className="bg-gray-800 rounded-xl p-6 shadow-lg h-64 overflow-y-auto">
                                 <h2 className="text-xl font-semibold mb-4">
                                     Access History
                                 </h2>
-                                <div className="h-52 overflow-y-auto space-y-2 pr-2">
+                                <div className="space-y-2">
                                     {accessHistory
                                         .slice()
                                         .reverse()
@@ -585,11 +580,11 @@ const ClockAlgorithm = () => {
                             </div>
 
                             {/* Algorithm steps */}
-                            <div className="bg-gray-800 rounded-xl p-6 shadow-lg h-64 overflow-hidden">
+                            <div className="bg-gray-800 rounded-xl p-6 shadow-lg h-64 overflow-y-auto">
                                 <h2 className="text-xl font-semibold mb-4">
                                     Algorithm Steps
                                 </h2>
-                                <div className="h-52 overflow-y-auto space-y-2 font-mono text-sm pr-2">
+                                <div className="space-y-2 font-mono text-sm">
                                     {algorithmSteps
                                         .slice()
                                         .reverse()
