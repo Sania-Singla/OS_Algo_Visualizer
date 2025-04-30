@@ -400,7 +400,7 @@ export default function PagingModule({
                         <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
                             <div className="flex flex-wrap justify-between items-center mb-4 gap-4">
                                 <div className="flex gap-2">
-                                    <button
+                                    {/* <button
                                         onClick={() => {
                                             setClockState((prev) => ({
                                                 ...prev,
@@ -428,7 +428,7 @@ export default function PagingModule({
                                         className="px-3 py-2 bg-gray-600 hover:bg-gray-700 rounded-lg font-medium text-sm"
                                     >
                                         🔄 Reset
-                                    </button>
+                                    </button> */}
                                     <button
                                         onClick={() =>
                                             sharedActions.createProcess()
