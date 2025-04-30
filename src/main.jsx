@@ -19,7 +19,7 @@ import {
     Priority,
     PriorityPreemptive,
 } from './pages/CPU';
-import { LRU, OPR, ClockAlgorithm, MemoryVisualiser } from './pages/Memory';
+import {  MemoryVisualiser, BuddyModule } from './pages/Memory';
 import { Bankers } from './pages/DeadLock';
 import { DiningPhilosopher } from './pages/Sync';
 
@@ -57,10 +57,12 @@ const router = createBrowserRouter(
             </Route>
 
             <Route path="/memory">
-                <Route path="lru" element={<LRU />} />
+                {/* <Route path="lru" element={<LRU />} />
                 <Route path="opr" element={<OPR />} />
-                <Route path="clock" element={<ClockAlgorithm />} />
-                <Route path="memory-visual" element={<MemoryVisualiser />} />
+                <Route path="clock" element={<ClockAlgorithm />} /> */}
+                <Route path="paging" element={<MemoryVisualiser />} />
+                <Route path="buddy" element={<BuddyModule />} />
+
             </Route>
 
             <Route path="/deadlock">
