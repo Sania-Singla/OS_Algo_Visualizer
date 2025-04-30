@@ -61,54 +61,59 @@ const ClockAlgorithm = () => {
         setPages([...pages, newPage]);
     };
 
-    const accessPage = (pageNum) => {
-        if (!settings.initialized) return;
+    const accessPage = async (pageNum) => {
+        if (!settings.initialized || isRunning) return;
 
+        setIsRunning(true);
         const page = pages.find((p) => p.id === pageNum);
-        if (!page) return;
+        if (!page) {
+            setIsRunning(false);
+            return;
+        }
 
         setActiveRequest(page);
 
-        setTimeout(() => {
-            const updatedPages = pages.map((p) =>
-                p.id === pageNum ? { ...p, accessed: true } : p
+        // Update page accessed status
+        const updatedPages = pages.map((p) =>
+            p.id === pageNum ? { ...p, accessed: true } : p
+        );
+        setPages(updatedPages);
+
+        // Check for hit
+        const frameIndex = frames.findIndex((f) => f.page?.id === pageNum);
+
+        if (frameIndex >= 0) {
+            // Page hit - update reference bit
+            const updatedFrames = frames.map((f, i) =>
+                i === frameIndex
+                    ? {
+                        ...f,
+                        referenceBit: 1,
+                        isActive: true,
+                    }
+                    : f
             );
-            setPages(updatedPages);
 
-            // Check for hit
-            const frameIndex = frames.findIndex((f) => f.page?.id === pageNum);
+            setFrames(updatedFrames);
+            setStats((prev) => ({ ...prev, hits: prev.hits + 1 }));
 
-            if (frameIndex >= 0) {
-                // Page hit
-                const updatedFrames = frames.map((f, i) =>
-                    i === frameIndex
-                        ? {
-                              ...f,
-                              referenceBit: 1,
-                              isActive: true,
-                          }
-                        : f
-                );
+            setAlgorithmSteps((prev) => [
+                ...prev,
+                `Hit: Page ${pageNum} found in frame ${frameIndex}, reference bit set to 1`,
+            ]);
 
-                setFrames(updatedFrames);
-                setStats((prev) => ({ ...prev, hits: prev.hits + 1 }));
+            // Visual feedback for hit
+            await sleep(500 / speed);
+            
+            // Reset active state but keep the updated reference bit
+            setFrames(frames => frames.map((f, i) => 
+                i === frameIndex ? { ...f, isActive: false } : f
+            ));
 
-                setAlgorithmSteps((prev) => [
-                    ...prev,
-                    `Hit: Page ${pageNum} found in frame ${frameIndex}, reference bit set to 1`,
-                ]);
-
-                setTimeout(() => {
-                    setFrames((frames) =>
-                        frames.map((f) => ({ ...f, isActive: false }))
-                    );
-                    setActiveRequest(null);
-                    setHandPosition((frameIndex + 1) % frames.length);
-                }, 500);
-            } else {
-                // Page miss - replacement needed
-                setStats((prev) => ({ ...prev, misses: prev.misses + 1 }));
-                replacePage(pageNum);
+            // Move hand to next position only if it was pointing to this frame
+            if (handPosition === frameIndex) {
+                setHandPosition((frameIndex + 1) % frames.length);
+                setMoveCount(prev => prev + 1);
             }
 
             setAccessHistory((prev) => [
@@ -116,135 +121,155 @@ const ClockAlgorithm = () => {
                 {
                     pageId: pageNum,
                     time: new Date().toLocaleTimeString(),
-                    hit: frameIndex >= 0,
-                    frame: frameIndex >= 0 ? frameIndex : 'Disk',
+                    hit: true,
+                    frame: frameIndex,
                 },
             ]);
-        }, 300);
+        } else {
+            // Page miss - replacement needed
+            setStats((prev) => ({ ...prev, misses: prev.misses + 1 }));
+            await replacePage(pageNum);
+            
+            setAccessHistory((prev) => [
+                ...prev.slice(-9),
+                {
+                    pageId: pageNum,
+                    time: new Date().toLocaleTimeString(),
+                    hit: false,
+                    frame: 'Disk',
+                },
+            ]);
+        }
+
+        setActiveRequest(null);
+        setIsRunning(false);
     };
 
-    // Update the sleep function to respect speed
-    const sleep = (ms) =>
-        new Promise((resolve) => setTimeout(resolve, ms / speed));
+    const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-    // Update the replacePage function to use the speed-adjusted sleep
     const replacePage = async (newPageId) => {
         let updatedFrames = [...frames];
-        let steps = [
-            `Miss: Page ${newPageId} not found, starting replacement from frame ${handPosition}`,
-        ];
-
+        let currentPos = handPosition;
         const newPage = pages.find((p) => p.id === newPageId);
-        let current = handPosition;
+        
+        setAlgorithmSteps((prev) => [
+            ...prev,
+            `Miss: Page ${newPageId} not found, starting replacement from frame ${currentPos}`,
+        ]);
 
-        while (true) {
-            setFrames((frames) =>
-                frames.map((f, i) =>
-                    i === current
-                        ? { ...f, isActive: true }
-                        : { ...f, isActive: false }
-                )
-            );
+        let replaced = false;
+        let attempts = 0;
+        const maxAttempts = frames.length * 2; // Prevent infinite loops
 
-            await sleep(500); // This will now respect the speed setting
+        while (!replaced && attempts < maxAttempts) {
+            attempts++;
+            const currentFrame = updatedFrames[currentPos];
 
-            const frame = updatedFrames[current];
+            // Highlight the current frame being examined
+            setFrames(frames => frames.map((f, i) => 
+                i === currentPos ? { ...f, isActive: true } : { ...f, isActive: false }
+            ));
+            await sleep(500 / speed);
 
-            if (frame.referenceBit === 0) {
-                steps.push(
-                    `Frame ${current} has reference bit 0 - Replacing page ${frame.page?.id ?? 'Empty'}`
-                );
+            if (currentFrame.referenceBit === 0) {
+                // Replacement candidate found
+                const pos = getClockPosition(currentPos, frames.length);
 
-                const pos = getClockPosition(current, frames.length);
-
-                // Animate old page out
-                setSwapAnimation({
-                    type: 'out',
-                    frameIndex: current,
-                    page: frame.page,
-                    color: frame.page?.color || 'bg-gray-400',
-                    startX: pos.x,
-                    startY: pos.y,
-                });
-                await sleep(400);
-
-                setSwapAnimation(null);
-                await sleep(100);
+                // Animate old page out if exists
+                if (currentFrame.page) {
+                    setSwapAnimation({
+                        type: 'out',
+                        frameIndex: currentPos,
+                        page: currentFrame.page,
+                        color: currentFrame.page.color,
+                        startX: pos.x,
+                        startY: pos.y,
+                    });
+                    await sleep(400 / speed);
+                    setSwapAnimation(null);
+                    await sleep(100 / speed);
+                }
 
                 // Animate new page in
                 setSwapAnimation({
                     type: 'in',
-                    frameIndex: current,
+                    frameIndex: currentPos,
                     page: newPage,
                     color: newPage.color,
                     endX: pos.x,
                     endY: pos.y,
                 });
-                await sleep(400);
+                await sleep(400 / speed);
+                setSwapAnimation(null);
 
-                updatedFrames[current] = {
-                    ...updatedFrames[current],
+                // Update the frame
+                updatedFrames[currentPos] = {
+                    ...updatedFrames[currentPos],
                     page: newPage,
                     referenceBit: 1,
                     isActive: false,
                 };
+                setFrames(updatedFrames);
 
-                setFrames([...updatedFrames]);
-                setSwapAnimation(null);
-                setHandPosition((current + 1) % frames.length);
-                setMoveCount((prev) => prev + 1);
-                setActiveRequest(null);
-                break;
+                // Move hand to next position
+                const newHandPosition = (currentPos + 1) % frames.length;
+                setHandPosition(newHandPosition);
+                setMoveCount(prev => prev + 1);
+                
+                setAlgorithmSteps((prev) => [
+                    ...prev,
+                    `Frame ${currentPos} had reference bit 0 - Replaced page ${currentFrame.page?.id || 'Empty'} with ${newPage.id}`,
+                ]);
+
+                replaced = true;
             } else {
-                steps.push(
-                    `Frame ${current} has reference bit 1 - Second Chance given!`
-                );
-
-                const pos = getClockPosition(current, frames.length);
-
+                // Give second chance
+                updatedFrames[currentPos].referenceBit = 0;
+                setFrames(updatedFrames);
+                
+                // Visual feedback for second chance
+                const pos = getClockPosition(currentPos, frames.length);
                 setSwapAnimation({
                     type: 'secondChance',
-                    frameIndex: current,
-                    page: frame.page,
-                    color: frame.page?.color || 'bg-yellow-500',
+                    frameIndex: currentPos,
+                    page: currentFrame.page,
+                    color: 'bg-yellow-500',
                     x: pos.x,
                     y: pos.y,
                 });
-
-                await sleep(400);
-
-                updatedFrames[current].referenceBit = 0;
-                setFrames([...updatedFrames]);
+                await sleep(400 / speed);
                 setSwapAnimation(null);
 
-                current = (current + 1) % frames.length;
-                setHandPosition(current);
-                setMoveCount((prev) => prev + 1);
+                setAlgorithmSteps((prev) => [
+                    ...prev,
+                    `Frame ${currentPos} had reference bit 1 - Gave second chance (bit set to 0)`,
+                ]);
+
+                // Move to next frame
+                currentPos = (currentPos + 1) % frames.length;
+                setHandPosition(currentPos);
+                setMoveCount(prev => prev + 1);
+                await sleep(200 / speed);
             }
         }
 
-        setAlgorithmSteps((prev) => [...prev, ...steps]);
+        if (!replaced) {
+            setAlgorithmSteps((prev) => [
+                ...prev,
+                `Warning: Could not find replacement after ${maxAttempts} attempts`,
+            ]);
+        }
     };
 
-
-    // Update the clock hand transition duration
-    <div
-        className="absolute top-1/2 left-1/2 w-1/2 h-0.5 bg-orange-500 origin-left z-0"
-        style={{
-            transform: `rotate(${moveCount * (360 / frames.length) - 90}deg)`,
-            transition: `transform ${0.5 / speed}s ease-in-out`, // Speed-adjusted transition
-        }}
-    />;
-
-    // Calculate positions for clock visualization
     const getClockPosition = (index, total) => {
-        const angle = index * (360 / total) - 90; // Start from top (-90 degrees)
-        const radius = 40; // Percentage from center
+        const angle = index * (360 / total) - 90;
+        const radius = 40;
         const x = 50 + radius * Math.cos((angle * Math.PI) / 180);
         const y = 50 + radius * Math.sin((angle * Math.PI) / 180);
         return { x, y, angle };
     };
 
+    // Rest of your component code remains the same...
     return (
         <div className="min-h-screen bg-gray-900 text-white px-6 md:px-10 py-8">
             <div>
