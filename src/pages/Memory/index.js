@@ -1,6 +1,7 @@
-import LRU from './LRU';
-import OPR from './OPR';
-import ClockAlgorithm from './ClockAlgorithm';
+// import LRU from '../../../extrasMemory/LRU';
+// import OPR from '../../../extrasMemory/OPR';
+// import ClockAlgorithm from '../../../extrasMemory/ClockAlgorithm';
 import MemoryVisualiser from './MemoryVisualiser';
+import BuddyModule from './BuddyModule';
 
-export { LRU, OPR, ClockAlgorithm, MemoryVisualiser};
+export { MemoryVisualiser, BuddyModule };

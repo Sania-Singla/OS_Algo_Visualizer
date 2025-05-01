@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Footer, Header } from './components';
@@ -108,18 +107,18 @@ const DISK_ALGOS = [
 
 const MEMORY_ALGOS = [
     {
-        title: 'Page Replacement',
-        description: 'Clock Algorithm, uses a circular list',
-        icon: <FiClock size={24} />,
-        color: 'from-rose-500 to-red-600',
-        path: '/memory/clock',
-    },
-    {
-        title: 'Memory Allocation',
-        description: 'First-fit, Best-fit, Worst-fit strategies',
+        title: 'Virtual Memory Management',
+        description: 'Paging, Page Replacement and Thrashing',
         icon: <FiCpu size={24} />,
         color: 'from-blue-500 to-blue-600',
-        path: '/memory/memory-visual',
+        path: '/memory/paging',
+    },
+    {
+        title: 'Memory Allocation for kernal',
+        description: 'Buddy Allocator',
+        icon: <FiCpu size={24} />,
+        color: 'from-pink-500 to-rose-700',
+        path: '/memory/buddy',
     },
 ];
 
@@ -171,12 +170,12 @@ const AlgorithmTabs = ({ activeTab, setActiveTab }) => {
     ];
 
     return (
-        <div className="flex flex-wrap md:justify-start justify-center gap-4 mb-10">
+        <div className="flex flex-wrap justify-center md:justify-start gap-4 mb-8">
             {tabs.map((tab) => (
                 <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`cursor-pointer relative px-3 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
+                    className={`cursor-pointer relative px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
                         activeTab === tab.id
                             ? 'text-white'
                             : 'text-gray-400 hover:text-gray-300'
@@ -187,7 +186,7 @@ const AlgorithmTabs = ({ activeTab, setActiveTab }) => {
                     {activeTab === tab.id && (
                         <motion.div
                             layoutId="activeTab"
-                            className="absolute bottom-0 left-0 right-2 h-1 bg-blue-400 rounded-full"
+                            className="absolute bottom-0 left-0 right-0 h-1 bg-blue-400 rounded-full"
                             transition={{
                                 type: 'spring',
                                 bounce: 0.2,
@@ -223,7 +222,7 @@ export default function App() {
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white px-6 md:px-10 py-8">
             <Header />
 
-            <main className="overflow-auto">
+            <main className="px-4 overflow-auto">
                 <AlgorithmTabs
                     activeTab={activeTab}
                     setActiveTab={setActiveTab}
