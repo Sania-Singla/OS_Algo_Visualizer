@@ -52,6 +52,12 @@ export default function VisualizationArea({
                                         </span>
                                         <span className="text-sm text-gray-400">
                                             <span className="font-medium">
+                                                BT:
+                                            </span>{' '}
+                                            {p.burstTime}
+                                        </span>
+                                        <span className="text-sm text-gray-400">
+                                            <span className="font-medium">
                                                 RT:
                                             </span>{' '}
                                             {p.remainingTime}/{p.burstTime}
