@@ -41,7 +41,7 @@ export default function ControlPanel({
     const generateRandomProcess = (currentTime, nextPid) => {
         const burstTime = Math.floor(Math.random() * 5) + 1; // 1-5
         const priority = Math.floor(Math.random() * 3) + 1; // 1-3
-        const arrivalTime = currentTime + Math.floor(Math.random() * 10);
+        const arrivalTime = currentTime + Math.floor(Math.random() * 5);
 
         return {
             pid: nextPid,
