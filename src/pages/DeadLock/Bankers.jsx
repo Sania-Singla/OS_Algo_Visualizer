@@ -8,7 +8,6 @@ export default function Bankers() {
     const [safeSequence, setSafeSequence] = useState([]);
     const [isSafe, setIsSafe] = useState(null);
 
-    // NEW
     const [requestPid, setRequestPid] = useState(0);
     const [resourceRequest, setResourceRequest] = useState([]);
 
@@ -22,7 +21,7 @@ export default function Bankers() {
         setAvailable(Array(noOfResources).fill(0));
         setSafeSequence([]);
         setIsSafe(null);
-        setResourceRequest(Array(noOfResources).fill(0)); // NEW
+        setResourceRequest(Array(noOfResources).fill(0));
     };
 
     const handleInputChange = (type, pid, rid, value) => {
@@ -42,7 +41,45 @@ export default function Bankers() {
         setAvailable(updatedAvailable);
     };
 
-    const applySafetyAlgorithm = (tempProcesses = processes, tempAvailable = available) => {
+    const handleArrowNavigation = (e, type, pid, rid) => {
+        const key = e.key;
+        const inputs = document.querySelectorAll('input[data-type]');
+        const index = Array.from(inputs).findIndex(
+            (input) =>
+                parseInt(input.dataset.pid) === pid &&
+                parseInt(input.dataset.rid) === rid &&
+                input.dataset.type === type
+        );
+
+        let newIndex = index;
+
+        switch (key) {
+            case 'ArrowRight':
+                newIndex = index + 1;
+                break;
+            case 'ArrowLeft':
+                newIndex = index - 1;
+                break;
+            case 'ArrowDown':
+                newIndex = index + noOfResources * 2;
+                break;
+            case 'ArrowUp':
+                newIndex = index - noOfResources * 2;
+                break;
+            default:
+                return;
+        }
+
+        if (inputs[newIndex]) {
+            inputs[newIndex].focus();
+            e.preventDefault();
+        }
+    };
+
+    const applySafetyAlgorithm = (
+        tempProcesses = processes,
+        tempAvailable = available
+    ) => {
         const work = [...tempAvailable];
         const finish = Array(noOfProcesses).fill(false);
         const sequence = [];
@@ -82,20 +119,17 @@ export default function Bankers() {
         }
     };
 
-    // NEW
     const handleRequestChange = (rid, value) => {
         const updatedRequest = [...resourceRequest];
         updatedRequest[rid] = parseInt(value);
         setResourceRequest(updatedRequest);
     };
 
-    // NEW
     const handleResourceRequest = () => {
         const tempProcesses = JSON.parse(JSON.stringify(processes));
         const tempAvailable = [...available];
         const pid = requestPid;
 
-        // Check if request <= need && request <= available
         for (let i = 0; i < noOfResources; i++) {
             if (resourceRequest[i] > tempProcesses[pid].need[i]) {
                 alert(`Request exceeds the process's needs.`);
@@ -107,14 +141,12 @@ export default function Bankers() {
             }
         }
 
-        // Provisionally allocate
         for (let i = 0; i < noOfResources; i++) {
             tempAvailable[i] -= resourceRequest[i];
             tempProcesses[pid].allocated[i] += resourceRequest[i];
             tempProcesses[pid].need[i] -= resourceRequest[i];
         }
 
-        // Check if still safe
         const safe = applySafetyAlgorithm(tempProcesses, tempAvailable);
         if (safe) {
             setProcesses(tempProcesses);
@@ -132,8 +164,8 @@ export default function Bankers() {
             </h1>
 
             <div className="flex flex-col gap-4 mb-8">
-                {/* Initialization Part */}
                 <div className="flex gap-4">
+                    <label>No. of Processes</label>
                     <input
                         type="number"
                         placeholder="No of Processes"
@@ -143,6 +175,8 @@ export default function Bankers() {
                         }
                         className="px-4 py-2 rounded bg-gray-700 text-white"
                     />
+
+                    <label>No. of Resources</label>
                     <input
                         type="number"
                         placeholder="No of Resources"
@@ -160,7 +194,6 @@ export default function Bankers() {
                     </button>
                 </div>
 
-                {/* Table for Process Info */}
                 {processes.length > 0 && (
                     <div className="overflow-x-auto">
                         <table className="min-w-full bg-gray-800 rounded-lg overflow-hidden">
@@ -170,7 +203,10 @@ export default function Bankers() {
                                     {Array.from(
                                         { length: noOfResources },
                                         (_, idx) => (
-                                            <th key={`max-${idx}`} className="px-4 py-2">
+                                            <th
+                                                key={`max-${idx}`}
+                                                className="px-4 py-2"
+                                            >
                                                 Max R{idx}
                                             </th>
                                         )
@@ -178,7 +214,10 @@ export default function Bankers() {
                                     {Array.from(
                                         { length: noOfResources },
                                         (_, idx) => (
-                                            <th key={`alloc-${idx}`} className="px-4 py-2">
+                                            <th
+                                                key={`alloc-${idx}`}
+                                                className="px-4 py-2"
+                                            >
                                                 Allocated R{idx}
                                             </th>
                                         )
@@ -186,7 +225,10 @@ export default function Bankers() {
                                     {Array.from(
                                         { length: noOfResources },
                                         (_, idx) => (
-                                            <th key={`need-${idx}`} className="px-4 py-2">
+                                            <th
+                                                key={`need-${idx}`}
+                                                className="px-4 py-2"
+                                            >
                                                 Need R{idx}
                                             </th>
                                         )
@@ -195,36 +237,80 @@ export default function Bankers() {
                             </thead>
                             <tbody>
                                 {processes.map((process, pid) => (
-                                    <tr key={pid} className="border-b border-gray-600">
+                                    <tr
+                                        key={pid}
+                                        className="border-b border-gray-600"
+                                    >
                                         <td className="px-4 py-2 font-bold text-center">
                                             P{pid}
                                         </td>
                                         {process.max.map((val, rid) => (
-                                            <td key={`max-${pid}-${rid}`} className="px-2 py-2">
+                                            <td
+                                                key={`max-${pid}-${rid}`}
+                                                className="px-2 py-2"
+                                            >
                                                 <input
                                                     type="number"
+                                                    data-pid={pid}
+                                                    data-rid={rid}
+                                                    data-type="max"
                                                     value={val}
                                                     onChange={(e) =>
-                                                        handleInputChange('max', pid, rid, e.target.value)
+                                                        handleInputChange(
+                                                            'max',
+                                                            pid,
+                                                            rid,
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    onKeyDown={(e) =>
+                                                        handleArrowNavigation(
+                                                            e,
+                                                            'max',
+                                                            pid,
+                                                            rid
+                                                        )
                                                     }
                                                     className="w-16 px-2 py-1 bg-gray-700 text-white rounded"
                                                 />
                                             </td>
                                         ))}
                                         {process.allocated.map((val, rid) => (
-                                            <td key={`alloc-${pid}-${rid}`} className="px-2 py-2">
+                                            <td
+                                                key={`alloc-${pid}-${rid}`}
+                                                className="px-2 py-2"
+                                            >
                                                 <input
                                                     type="number"
+                                                    data-pid={pid}
+                                                    data-rid={rid}
+                                                    data-type="allocated"
                                                     value={val}
                                                     onChange={(e) =>
-                                                        handleInputChange('allocated', pid, rid, e.target.value)
+                                                        handleInputChange(
+                                                            'allocated',
+                                                            pid,
+                                                            rid,
+                                                            e.target.value
+                                                        )
+                                                    }
+                                                    onKeyDown={(e) =>
+                                                        handleArrowNavigation(
+                                                            e,
+                                                            'allocated',
+                                                            pid,
+                                                            rid
+                                                        )
                                                     }
                                                     className="w-16 px-2 py-1 bg-gray-700 text-white rounded"
                                                 />
                                             </td>
                                         ))}
                                         {process.need.map((val, rid) => (
-                                            <td key={`need-${pid}-${rid}`} className="px-2 py-2 text-center">
+                                            <td
+                                                key={`need-${pid}-${rid}`}
+                                                className="px-2 py-2 text-center"
+                                            >
                                                 {val}
                                             </td>
                                         ))}
@@ -235,7 +321,6 @@ export default function Bankers() {
                     </div>
                 )}
 
-                {/* Available Resources */}
                 {processes.length > 0 && (
                     <div className="flex flex-col gap-4 mt-6">
                         <div className="flex flex-wrap gap-2 items-center">
@@ -246,7 +331,10 @@ export default function Bankers() {
                                     type="number"
                                     value={val}
                                     onChange={(e) =>
-                                        handleAvailableChange(rid, e.target.value)
+                                        handleAvailableChange(
+                                            rid,
+                                            e.target.value
+                                        )
                                     }
                                     className="w-16 px-2 py-1 bg-gray-700 text-white rounded"
                                 />
@@ -261,10 +349,11 @@ export default function Bankers() {
                     </div>
                 )}
 
-                {/* NEW: Request Resource Section */}
                 {processes.length > 0 && (
                     <div className="flex flex-col gap-4 mt-6 p-4 border border-gray-700 rounded">
-                        <h2 className="text-xl font-bold text-white">Request Resources</h2>
+                        <h2 className="text-xl font-bold text-white">
+                            Request Resources
+                        </h2>
                         <div className="flex gap-2 items-center">
                             <label>Process ID:</label>
                             <input
@@ -272,7 +361,9 @@ export default function Bankers() {
                                 min="0"
                                 max={noOfProcesses - 1}
                                 value={requestPid}
-                                onChange={(e) => setRequestPid(parseInt(e.target.value))}
+                                onChange={(e) =>
+                                    setRequestPid(parseInt(e.target.value))
+                                }
                                 className="w-20 px-2 py-1 bg-gray-700 text-white rounded"
                             />
                         </div>
@@ -282,7 +373,9 @@ export default function Bankers() {
                                     key={`request-${rid}`}
                                     type="number"
                                     value={val}
-                                    onChange={(e) => handleRequestChange(rid, e.target.value)}
+                                    onChange={(e) =>
+                                        handleRequestChange(rid, e.target.value)
+                                    }
                                     className="w-16 px-2 py-1 bg-gray-700 text-white rounded"
                                 />
                             ))}
@@ -297,7 +390,6 @@ export default function Bankers() {
                 )}
             </div>
 
-            {/* Display Result */}
             {isSafe !== null && (
                 <div className="mt-8 text-center">
                     {isSafe ? (
@@ -307,7 +399,9 @@ export default function Bankers() {
                             </h2>
                             <p className="mt-2">
                                 Safe Sequence:{' '}
-                                {safeSequence.map((pid) => `P${pid}`).join(' → ')}
+                                {safeSequence
+                                    .map((pid) => `P${pid}`)
+                                    .join(' → ')}
                             </p>
                         </>
                     ) : (
