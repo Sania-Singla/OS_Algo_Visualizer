@@ -108,7 +108,7 @@ export default function MemoryVisualizer() {
                 </nav>
             </motion.header>
 
-            <main className="rounded-lg shadow-lg ">
+            <main className="rounded-lg shadow-lg">
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={activeModule}
