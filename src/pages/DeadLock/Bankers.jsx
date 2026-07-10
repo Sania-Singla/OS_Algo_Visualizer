@@ -1,4 +1,10 @@
 import { useState } from 'react';
+import {
+    initProcesses,
+    runSafetyAlgorithm,
+    requestResources,
+    DEMO_DATA,
+} from './bankers_algo';
 
 export function Bankers() {
     const [noOfProcesses, setNoOfProcesses] = useState(0);
@@ -12,16 +18,22 @@ export function Bankers() {
     const [resourceRequest, setResourceRequest] = useState([]);
 
     const initializeProcesses = () => {
-        const tempProcesses = Array.from({ length: noOfProcesses }, () => ({
-            max: Array(noOfResources).fill(0),
-            allocated: Array(noOfResources).fill(0),
-            need: Array(noOfResources).fill(0),
-        }));
-        setProcesses(tempProcesses);
+        setProcesses(initProcesses(noOfProcesses, noOfResources));
         setAvailable(Array(noOfResources).fill(0));
         setSafeSequence([]);
         setIsSafe(null);
         setResourceRequest(Array(noOfResources).fill(0));
+    };
+
+    const loadDemoData = () => {
+        setNoOfProcesses(DEMO_DATA.noOfProcesses);
+        setNoOfResources(DEMO_DATA.noOfResources);
+        setProcesses(DEMO_DATA.processes);
+        setAvailable(DEMO_DATA.available);
+        setResourceRequest(Array(DEMO_DATA.noOfResources).fill(0));
+        setRequestPid(0);
+        setSafeSequence([]);
+        setIsSafe(null);
     };
 
     const handleInputChange = (type, pid, rid, value) => {
@@ -76,47 +88,15 @@ export function Bankers() {
         }
     };
 
-    const applySafetyAlgorithm = (
-        tempProcesses = processes,
-        tempAvailable = available
-    ) => {
-        const work = [...tempAvailable];
-        const finish = Array(noOfProcesses).fill(false);
-        const sequence = [];
-        let proceed = true;
-
-        while (proceed) {
-            proceed = false;
-            for (let i = 0; i < noOfProcesses; i++) {
-                if (!finish[i]) {
-                    let canProceed = true;
-                    for (let j = 0; j < noOfResources; j++) {
-                        if (tempProcesses[i].need[j] > work[j]) {
-                            canProceed = false;
-                            break;
-                        }
-                    }
-                    if (canProceed) {
-                        for (let j = 0; j < noOfResources; j++) {
-                            work[j] += tempProcesses[i].allocated[j];
-                        }
-                        finish[i] = true;
-                        sequence.push(i);
-                        proceed = true;
-                    }
-                }
-            }
-        }
-
-        if (finish.every(Boolean)) {
-            setIsSafe(true);
-            setSafeSequence(sequence);
-            return true;
-        } else {
-            setIsSafe(false);
-            setSafeSequence([]);
-            return false;
-        }
+    const checkSafeState = () => {
+        const { isSafe, sequence } = runSafetyAlgorithm(
+            processes,
+            available,
+            noOfProcesses,
+            noOfResources
+        );
+        setIsSafe(isSafe);
+        setSafeSequence(sequence);
     };
 
     const handleRequestChange = (rid, value) => {
@@ -126,35 +106,25 @@ export function Bankers() {
     };
 
     const handleResourceRequest = () => {
-        const tempProcesses = JSON.parse(JSON.stringify(processes));
-        const tempAvailable = [...available];
-        const pid = requestPid;
+        const result = requestResources(
+            processes,
+            available,
+            requestPid,
+            resourceRequest,
+            noOfProcesses,
+            noOfResources
+        );
 
-        for (let i = 0; i < noOfResources; i++) {
-            if (resourceRequest[i] > tempProcesses[pid].need[i]) {
-                alert(`Request exceeds the process's needs.`);
-                return;
-            }
-            if (resourceRequest[i] > tempAvailable[i]) {
-                alert(`Not enough resources available.`);
-                return;
-            }
+        if (!result.granted) {
+            alert(`Request cannot be granted ❌ (${result.reason})`);
+            return;
         }
 
-        for (let i = 0; i < noOfResources; i++) {
-            tempAvailable[i] -= resourceRequest[i];
-            tempProcesses[pid].allocated[i] += resourceRequest[i];
-            tempProcesses[pid].need[i] -= resourceRequest[i];
-        }
-
-        const safe = applySafetyAlgorithm(tempProcesses, tempAvailable);
-        if (safe) {
-            setProcesses(tempProcesses);
-            setAvailable(tempAvailable);
-            alert('Request can be granted ✅');
-        } else {
-            alert('Request cannot be granted ❌ (Would lead to unsafe state)');
-        }
+        setProcesses(result.updatedProcesses);
+        setAvailable(result.updatedAvailable);
+        setIsSafe(true);
+        setSafeSequence(result.safeSequence);
+        alert('Request can be granted ✅');
     };
 
     return (
@@ -164,7 +134,7 @@ export function Bankers() {
             </h1>
 
             <div className="flex flex-col gap-4 mb-8">
-                <div className="flex gap-4">
+                <div className="flex gap-4 items-center flex-wrap">
                     <label>No. of Processes</label>
                     <input
                         type="number"
@@ -191,6 +161,12 @@ export function Bankers() {
                         className="px-4 py-2 bg-green-600 rounded text-white"
                     >
                         Initialize
+                    </button>
+                    <button
+                        onClick={loadDemoData}
+                        className="px-4 py-2 bg-amber-600 rounded text-white"
+                    >
+                        Load Demo Data
                     </button>
                 </div>
 
@@ -341,7 +317,7 @@ export function Bankers() {
                             ))}
                         </div>
                         <button
-                            onClick={() => applySafetyAlgorithm()}
+                            onClick={checkSafeState}
                             className="px-6 py-2 bg-blue-600 rounded text-white"
                         >
                             Check Safe State
