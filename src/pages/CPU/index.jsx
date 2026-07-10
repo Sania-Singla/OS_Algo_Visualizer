@@ -1,4 +1,4 @@
-import { CPUScheduler } from './CPUScheduler';
+import { CpuScheduler } from './CPUScheduler';
 import {
     fcfs_algo,
     srtf_algo,
