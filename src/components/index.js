@@ -6,6 +6,9 @@ import ControlPanel from './ControlPanel';
 import VisualizationArea from './VisualizationArea';
 import DiskChart from './DiskChart';
 import RequestInput from './RequestInput';
+import AIExplainButton from './AiExplainButton';
+import PagingModule from './PagingModule';
+import ThrashingModule from './ThrashingModule';
 
 export {
     Footer,
@@ -16,4 +19,7 @@ export {
     VisualizationArea,
     DiskChart,
     RequestInput,
+    AIExplainButton,
+    PagingModule,
+    ThrashingModule,
 };

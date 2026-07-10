@@ -1,3 +1,1 @@
-import Bankers from './Bankers';
-
-export { Bankers };
+export { Bankers } from './Bankers';

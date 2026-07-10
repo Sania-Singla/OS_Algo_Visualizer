@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-export default function Bankers() {
+export function Bankers() {
     const [noOfProcesses, setNoOfProcesses] = useState(0);
     const [noOfResources, setNoOfResources] = useState(0);
     const [processes, setProcesses] = useState([]);

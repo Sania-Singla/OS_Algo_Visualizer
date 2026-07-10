@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { DiskChart, RequestInput } from '../../components';
+import { AIExplainButton, DiskChart, RequestInput } from '../../components';
 
-export default function DiskScheduler({ algorithm, algoType }) {
-    const [requests, setRequests] = useState([
-        98, 183, 37, 122, 14, 124, 65, 67,
-    ]);
+export function DiskScheduler({ algoType, algorithm }) {
+    const [requests, setRequests] = useState([]);
     const [head, setHead] = useState(53);
     const [totalSeek, setTotalSeek] = useState(0);
     const [headMovement, setHeadMovement] = useState([]);
@@ -18,12 +16,12 @@ export default function DiskScheduler({ algorithm, algoType }) {
     return (
         <div className="px-6 md:px-10 py-8 min-h-screen bg-gray-900 text-gray-200">
             <h1 className="text-3xl font-bold text-center mb-8">
-                {algoType === 'FCFS' && 'First-Come, First-Served'}
+                {algoType === 'FCFS' && 'First-Come, First-Serve'}
                 {algoType === 'SSTF' && 'Shortest Seek Time First'}
                 {algoType === 'SCAN' && 'SCAN (Elevator Algorithm)'}
                 {algoType === 'CSCAN' && 'Circular SCAN'}
                 {algoType === 'LOOK' && 'LOOK Algorithm'}
-                {algoType === 'CLOOK' && 'Circular LOOK'}{' '}
+                {algoType === 'CLOOK' && 'Circular LOOK'}
             </h1>
 
             <div className="flex flex-col gap-6">
@@ -103,6 +101,12 @@ export default function DiskScheduler({ algorithm, algoType }) {
                         </table>
                     </div>
                 </div>
+
+                <AIExplainButton
+                    algorithm={algorithm}
+                    processes={requests}
+                    result={headMovement}
+                />
             </div>
         </div>
     );

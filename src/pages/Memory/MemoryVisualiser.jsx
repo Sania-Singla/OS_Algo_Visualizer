@@ -1,107 +1,212 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-    PagingModule,
-    ThrashingModule,
-} from '../../components/Memory';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { PagingModule, ThrashingModule } from '../../components';
 
-// Initial state with shared memory
-const initialState = {
+const createInitialState = () => ({
     physicalMemory: Array(8).fill(null),
     pageTable: {},
     disk: Array(128).fill(null),
-    buddyAllocator: { tree: null },
-    slabAllocators: {
-        task_struct: { slabs: [] },
-        inode_cache: { slabs: [] },
-    },
     processes: [],
     nextPid: 1,
-    allocations: [],
-    nextAllocId: 1,
-    accessSequence: [],
+});
+
+const moduleConfig = {
+    paging: {
+        label: 'Paging',
+        component: PagingModule,
+    },
+    thrashing: {
+        label: 'Thrashing',
+        component: ThrashingModule,
+    },
 };
 
 export default function MemoryVisualizer() {
     const [activeModule, setActiveModule] = useState('paging');
-    const [memoryState, setMemoryState] = useState(initialState);
+
+    const [memoryState, setMemoryState] = useState(createInitialState);
+
     const [highlightedItem, setHighlightedItem] = useState(null);
 
-    // Reset the entire simulation
+    const highlightTimerRef = useRef(null);
+
+    const highlightItem = useCallback((item, duration = 1500) => {
+        clearTimeout(highlightTimerRef.current);
+
+        setHighlightedItem(item);
+
+        if (item) {
+            highlightTimerRef.current = setTimeout(() => {
+                setHighlightedItem(null);
+            }, duration);
+        }
+    }, []);
+
+    /*
+    onCreated is optional.
+
+    PagingModule:
+        createProcess();
+
+    ThrashingModule:
+        createProcess((pid) => highlight the new process);
+    */
+    const createProcess = useCallback((onCreated) => {
+        setMemoryState((previous) => {
+            const pid = previous.nextPid;
+
+            // Random value from 2 to 4
+            const pageCount = Math.floor(Math.random() * 3) + 2;
+
+            const newPages = {};
+
+            for (let pageNumber = 0; pageNumber < pageCount; pageNumber++) {
+                const vpn = `${pid}-${pageNumber}`;
+
+                newPages[vpn] = {
+                    present: false,
+                    ppn: null,
+                    referenced: false,
+                    modified: false,
+                };
+            }
+
+            onCreated?.(pid);
+
+            return {
+                ...previous,
+
+                processes: [
+                    ...previous.processes,
+                    {
+                        pid,
+                        pageCount,
+                    },
+                ],
+
+                pageTable: {
+                    ...previous.pageTable,
+                    ...newPages,
+                },
+
+                nextPid: pid + 1,
+            };
+        });
+    }, []);
+
+    const killProcess = useCallback(
+        (pid) => {
+            setMemoryState((previous) => {
+                const pageTable = {
+                    ...previous.pageTable,
+                };
+
+                const physicalMemory = [...previous.physicalMemory];
+
+                Object.keys(pageTable).forEach((vpn) => {
+                    if (!vpn.startsWith(`${pid}-`)) {
+                        return;
+                    }
+
+                    const entry = pageTable[vpn];
+
+                    if (entry.present && entry.ppn !== null) {
+                        physicalMemory[entry.ppn] = null;
+                    }
+
+                    delete pageTable[vpn];
+                });
+
+                return {
+                    ...previous,
+
+                    processes: previous.processes.filter(
+                        (process) => process.pid !== pid
+                    ),
+
+                    pageTable,
+                    physicalMemory,
+                };
+            });
+
+            highlightItem(
+                {
+                    type: 'process-remove',
+                    id: pid,
+                },
+                1000
+            );
+        },
+        [highlightItem]
+    );
+
     const resetSimulation = () => {
-        setMemoryState(initialState);
-        initializeBuddySystem(1024);
+        clearTimeout(highlightTimerRef.current);
+
+        setMemoryState(createInitialState());
+        setHighlightedItem(null);
     };
 
-    // Shared actions that multiple components might use
-    
-    const sharedActions = {
-      createProcess: () => {
-          const newPid = memoryState.nextPid;
-          const pageCount = Math.floor(Math.random() * 3) + 3; // 2-4 pages
-          
-          const newPageTable = {};
-          for (let i = 0; i < pageCount; i++) {
-              const vpn = `${newPid}-${i}`;
-              newPageTable[vpn] = {
-                  present: false,
-                  ppn: null,
-                  referenced: false,
-                  modified: false,
-              };
-          }
+    const sharedActions = useMemo(
+        () => ({
+            createProcess,
+            killProcess,
+            highlightItem,
+        }),
+        [createProcess, killProcess, highlightItem]
+    );
 
-          setMemoryState(prev => ({
-              ...prev,
-              processes: [...prev.processes, { pid: newPid, pageCount }],
-              pageTable: { ...prev.pageTable, ...newPageTable },
-              nextPid: prev.nextPid + 1
-          }));
-
-          return newPid;
-      },
-      highlightItem: (item) => {
-          setHighlightedItem(item);
-          if (item?.type.includes('thrashing')) {
-              setTimeout(() => setHighlightedItem(null), 2000);
-          }
-      }
-  };
+    const ActiveComponent = moduleConfig[activeModule].component;
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-4">
             <motion.header
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{
+                    opacity: 0,
+                    y: -20,
+                }}
+                animate={{
+                    opacity: 1,
+                    y: 0,
+                }}
                 className="mb-6"
             >
-                <h1 className="text-3xl text-center my-3 pb-6 font-bold text-purple-400">
+                <h1 className="my-3 pb-6 text-center text-3xl font-bold text-purple-400">
                     Linux Memory Management Visualizer
                 </h1>
-                <nav className="mx-12 flex justify-center items-center gap-4 mt-4">
-                    {[
-                        'paging',
-                        'thrashing',
-                    ].map((module) => (
-                        <motion.button
-                            key={module}
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setActiveModule(module)}
-                            className={`px-10 w-full font-semibold py-2 rounded-md ${
-                                activeModule === module
-                                    ? 'bg-blue-600 text-white border-yellow-500 border-3'
-                                    : 'bg-gray-200 hover:bg-gray-300'
-                            }`}
-                        >
-                            {module.charAt(0).toUpperCase() + module.slice(1)}
-                        </motion.button>
-                    ))}
+
+                <nav className="mx-auto mt-4 flex max-w-4xl flex-col items-center justify-center gap-4 sm:flex-row">
+                    {Object.entries(moduleConfig).map(
+                        ([moduleName, module]) => (
+                            <motion.button
+                                key={moduleName}
+                                whileHover={{
+                                    scale: 1.04,
+                                }}
+                                whileTap={{
+                                    scale: 0.96,
+                                }}
+                                onClick={() => setActiveModule(moduleName)}
+                                className={`w-full rounded-md px-8 py-2 font-semibold transition-colors ${
+                                    activeModule === moduleName
+                                        ? 'border-2 border-yellow-500 bg-blue-600 text-white'
+                                        : 'bg-gray-200 text-gray-900 hover:bg-gray-300'
+                                }`}
+                            >
+                                {module.label}
+                            </motion.button>
+                        )
+                    )}
+
                     <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{
+                            scale: 1.04,
+                        }}
+                        whileTap={{
+                            scale: 0.96,
+                        }}
                         onClick={resetSimulation}
-                        className="px-10 w-full py-2 bg-red-500 text-white rounded-md"
+                        className="w-full rounded-md bg-red-500 px-8 py-2 font-semibold text-white hover:bg-red-600"
                     >
                         Reset
                     </motion.button>
@@ -112,28 +217,28 @@ export default function MemoryVisualizer() {
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={activeModule}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: -20 }}
-                        transition={{ duration: 0.3 }}
+                        initial={{
+                            opacity: 0,
+                            x: 20,
+                        }}
+                        animate={{
+                            opacity: 1,
+                            x: 0,
+                        }}
+                        exit={{
+                            opacity: 0,
+                            x: -20,
+                        }}
+                        transition={{
+                            duration: 0.3,
+                        }}
                     >
-                        {activeModule === 'paging' && (
-                            <PagingModule
-                                state={memoryState}
-                                setState={setMemoryState}
-                                sharedActions={sharedActions}
-                                highlightedItem={highlightedItem}
-                            />
-                        )}
-                        
-                        {activeModule === 'thrashing' && (
-                            <ThrashingModule
-                                state={memoryState}
-                                setState={setMemoryState}
-                                sharedActions={sharedActions}
-                                highlightedItem={highlightedItem}
-                            />
-                        )}
+                        <ActiveComponent
+                            state={memoryState}
+                            setState={setMemoryState}
+                            sharedActions={sharedActions}
+                            highlightedItem={highlightedItem}
+                        />
                     </motion.div>
                 </AnimatePresence>
             </main>

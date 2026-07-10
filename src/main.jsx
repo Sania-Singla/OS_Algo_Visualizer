@@ -1,7 +1,9 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+
 import './index.css';
 import App from './App.jsx';
+
 import {
     RouterProvider,
     createBrowserRouter,
@@ -15,13 +17,13 @@ import {
     FCFS,
     SJF,
     SRTF,
-    RoundRobin,
+    RR,
     Priority,
-    PriorityPreemptive,
-} from './pages/CPU';
-import {  MemoryVisualiser, BuddyModule } from './pages/Memory';
+    PriorityPre,
+} from './pages/CPU/index.jsx';
+import { MemoryVisualiser, BuddyModule } from './pages/Memory';
 import { Bankers } from './pages/DeadLock';
-import { DiningPhilosopher } from './pages/Sync';
+import { NotFound } from './pages/General';
 
 const router = createBrowserRouter(
     createRoutesFromElements(
@@ -41,39 +43,29 @@ const router = createBrowserRouter(
                 <Route path="fcfs" element={<FCFS />} />
                 <Route path="srtf" element={<SRTF />} />
                 <Route path="sjf" element={<SJF />} />
-                <Route path="round-robin" element={<RoundRobin />} />
+                <Route path="round-robin" element={<RR />} />
                 <Route path="priority" element={<Priority />} />
-                <Route
-                    path="priority-premptive"
-                    element={<PriorityPreemptive />}
-                />
-            </Route>
-
-            <Route path="/sync">
-                <Route
-                    path="dining-philosopher"
-                    element={<DiningPhilosopher />}
-                />
-            </Route>
-
-            <Route path="/memory">
-                {/* <Route path="lru" element={<LRU />} />
-                <Route path="opr" element={<OPR />} />
-                <Route path="clock" element={<ClockAlgorithm />} /> */}
-                <Route path="paging" element={<MemoryVisualiser />} />
-                <Route path="buddy" element={<BuddyModule />} />
-
+                <Route path="priority-premptive" element={<PriorityPre />} />
             </Route>
 
             <Route path="/deadlock">
                 <Route path="bankers" element={<Bankers />} />
             </Route>
+
+            <Route path="/memory">
+                {/* <Route path="lru" element={<LRU />} />
+                <Route path="opr" element={<OPR />} /> */}
+                <Route path="paging" element={<MemoryVisualiser />} />
+                <Route path="buddy" element={<BuddyModule />} />
+            </Route>
+
+            <Route path="*" element={<NotFound />} />
         </Route>
     )
 );
 
 createRoot(document.getElementById('root')).render(
-    // <StrictMode>
-    <RouterProvider router={router} />
-    // </StrictMode>,
+    <StrictMode>
+        <RouterProvider router={router} />
+    </StrictMode>
 );

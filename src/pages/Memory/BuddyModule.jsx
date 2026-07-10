@@ -1,275 +1,518 @@
-import React, { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function BuddyModule() {
-  const minBlockSize = 1;
-  const maxBlockSize = 128;
+const MIN_SIZE = 1;
+const MAX_SIZE = 128;
 
-  const [tree, setTree] = useState(() => ({
-    id: 'root',
-    size: maxBlockSize,
-    isSplit: false,
-    allocated: false,
-    parent: null,
-    left: null,
-    right: null,
-  }));
-  const [requestSize, setRequestSize] = useState(minBlockSize);
-  const [manualSize, setManualSize] = useState('');
-  const [allocations, setAllocations] = useState([]);
-  const [highlightedBlock, setHighlightedBlock] = useState(null);
+function createBlock(id, size) {
+    return {
+        id,
+        size,
+        allocated: false,
+        requestedSize: null,
+        left: null,
+        right: null,
+    };
+}
 
-  const deepClone = (obj, map = new WeakMap()) => {
-    if (obj === null || typeof obj !== 'object') return obj;
-    if (map.has(obj)) return map.get(obj);
-    const clone = Array.isArray(obj) ? [] : {};
-    map.set(obj, clone);
-    Object.keys(obj).forEach(key => {
-      clone[key] = deepClone(obj[key], map);
-    });
-    return clone;
-  };
+function isSplit(block) {
+    return block.left !== null && block.right !== null;
+}
 
-  const findBlock = (node, size) => {
-    if (!node) return null;
-    if (node.isSplit) {
-      return findBlock(node.left, size) || findBlock(node.right, size);
-    } else {
-      if (!node.allocated && node.size >= size) return node;
-      return null;
-    }
-  };
-
-  const allocateMemory = (size) => {
-    if (size < minBlockSize || size > maxBlockSize) {
-      alert(`Size must be between ${minBlockSize} and ${maxBlockSize}`);
-      return;
-    }
-
-    const newTree = deepClone(tree);
-    let block = findBlock(newTree, size);
-
-    if (!block) {
-      alert('Not enough contiguous free memory for this request');
-      return;
-    }
-
-    setHighlightedBlock({ id: block.id, action: 'splitting' });
-
-    setTimeout(() => {
-      const splitAndAllocate = (block, size) => {
-        while (block.size / 2 >= size) {
-          block.isSplit = true;
-          block.left = {
-            id: `${block.id}-left`,
-            size: block.size / 2,
-            isSplit: false,
-            allocated: false,
-            parent: block,
-            left: null,
-            right: null,
-          };
-          block.right = {
-            id: `${block.id}-right`,
-            size: block.size / 2,
-            isSplit: false,
-            allocated: false,
-            parent: block,
-            left: null,
-            right: null,
-          };
-          setHighlightedBlock({ id: block.left.id, action: 'splitting' });
-          block = block.left;
-        }
-        block.allocated = true;
-        setHighlightedBlock({ id: block.id, action: 'allocated' });
-        const allocId = `alloc-${Date.now()}`;
-        setAllocations(prev => [...prev, { id: allocId, size: block.size, blockId: block.id }]);
-        return block;
-      };
-
-      splitAndAllocate(block, size);
-      setTree(newTree);
-    }, 500);
-  };
-
-  const handleManualSubmit = (e) => {
-    e.preventDefault();
-    const size = Number(manualSize);
-    if (!isNaN(size)) allocateMemory(size);
-  };
-
-  const freeMemory = (allocId) => {
-    const allocation = allocations.find(a => a.id === allocId);
-    if (!allocation) return;
-    const newTree = deepClone(tree);
-    const block = findBlockById(newTree, allocation.blockId);
-    if (block) {
-      setHighlightedBlock({ id: block.id, action: 'freeing' });
-      setTimeout(() => {
-        block.allocated = false;
-        const tryMerge = (node) => {
-          if (!node.parent) return;
-          const parent = node.parent;
-          const buddy = parent.left === node ? parent.right : parent.left;
-          if (buddy && !buddy.allocated && !buddy.isSplit) {
-            parent.isSplit = false;
-            parent.left = null;
-            parent.right = null;
-            setHighlightedBlock({ id: parent.id, action: 'merged' });
-            tryMerge(parent);
-          }
+/*
+Returns:
+{
+    tree: updated tree,
+    allocatedBlock: allocated block or null
+}
+*/
+function allocateBlock(block, requestedSize) {
+    if (block.allocated) {
+        return {
+            tree: block,
+            allocatedBlock: null,
         };
-        tryMerge(block);
-        setTree(newTree);
-        setAllocations(prev => prev.filter(a => a.id !== allocId));
-      }, 500);
     }
-  };
 
-  const findBlockById = (node, id) => {
-    if (!node) return null;
-    if (node.id === id) return node;
-    return findBlockById(node.left, id) || findBlockById(node.right, id);
-  };
+    // Search already-split children from left to right
+    if (isSplit(block)) {
+        const leftResult = allocateBlock(block.left, requestedSize);
 
-  const calculateUsage = () => {
-    let used = 0;
-    allocations.forEach(a => used += a.size);
-    return { used, percent: (used / maxBlockSize) * 100 };
-  };
+        if (leftResult.allocatedBlock) {
+            return {
+                tree: {
+                    ...block,
+                    left: leftResult.tree,
+                },
+                allocatedBlock: leftResult.allocatedBlock,
+            };
+        }
 
-  const { used, percent } = calculateUsage();
+        const rightResult = allocateBlock(block.right, requestedSize);
 
-  return (
-    <div className="text-white bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen p-6">
-      <h1 className="text-3xl font-bold text-center mb-12 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-        Buddy Memory Allocator
-      </h1>
+        return {
+            tree: {
+                ...block,
+                right: rightResult.tree,
+            },
+            allocatedBlock: rightResult.allocatedBlock,
+        };
+    }
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-gray-800 p-6 rounded-xl shadow-lg">
-          <h2 className="text-xl font-semibold mb-4">Allocate Memory</h2>
+    // Current block cannot satisfy the request
+    if (block.size < requestedSize) {
+        return {
+            tree: block,
+            allocatedBlock: null,
+        };
+    }
 
-          <label className="block text-sm mb-2">Select Size ({requestSize} KB)</label>
-          <input
-            type="range"
-            min={minBlockSize}
-            max={maxBlockSize}
-            value={requestSize}
-            onChange={(e) => setRequestSize(Number(e.target.value))}
-            className="w-full mb-4"
-          />
+    /*
+    Split while one half can still hold the request.
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => allocateMemory(requestSize)}
-            className="w-full py-2 mb-4 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium"
-          >
-            Allocate Memory
-          </motion.button>
+    Example:
+    Request = 20 KB
+    128 -> 64 -> 32
+    32 cannot split into 16 because 16 < 20.
+    */
+    if (block.size / 2 >= requestedSize) {
+        const halfSize = block.size / 2;
 
-          <form onSubmit={handleManualSubmit} className="mb-4">
-            <label className="block text-sm mb-2">Manual Size Input (KB)</label>
-            <input
-              type="number"
-              value={manualSize}
-              onChange={(e) => setManualSize(e.target.value)}
-              className="w-full px-3 py-2 text-white border-gray-500 border-1 rounded mb-2"
-            />
-            <button
-              type="submit"
-              className="w-full py-2 bg-green-600 hover:bg-green-700 rounded-lg font-medium"
-            >
-              Manual Allocate
-            </button>
-          </form>
+        const left = createBlock(`${block.id}-L`, halfSize);
 
-          <h3 className="font-semibold mb-2">Active Allocations</h3>
-          <AnimatePresence>
-            {allocations.map((alloc) => (
-              <motion.div
-                key={alloc.id}
-                layout
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex justify-between items-center p-2 bg-gray-700/50 rounded mb-2"
-              >
-                <span className="text-sm">{alloc.size} KB</span>
-                <button
-                  onClick={() => freeMemory(alloc.id)}
-                  className="text-red-400 hover:text-red-300 text-xs px-2"
-                >
-                  Free
-                </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
+        const right = createBlock(`${block.id}-R`, halfSize);
 
-        <div className="md:col-span-1 lg:col-span-2 bg-gray-800 p-6 rounded-xl shadow-lg">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Memory Tree</h2>
-            <div className="text-sm">Used: {used} KB / {maxBlockSize} KB</div>
-          </div>
-          <div className="h-3 w-full bg-gray-700 rounded-full mb-4">
-            <div
-              className="h-3 bg-blue-500 rounded-full transition-all duration-500"
-              style={{ width: `${percent}%` }}
-            />
-          </div>
-          <div className="overflow-x-auto">
-            {renderBlock(tree)}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+        const splitBlock = {
+            ...block,
+            left,
+            right,
+        };
 
-  function renderBlock(block, depth = 0) {
-    if (!block) return null;
-    const isHighlighted = highlightedBlock?.id === block.id;
-    const highlightColor = {
-      splitting: 'bg-blue-500/30',
-      allocated: 'bg-green-500/30',
-      freeing: 'bg-red-500/30',
-      merged: 'bg-purple-500/30',
-    }[highlightedBlock?.action] || '';
+        return allocateBlock(splitBlock, requestedSize);
+    }
+
+    const allocatedBlock = {
+        ...block,
+        allocated: true,
+        requestedSize,
+    };
+
+    return {
+        tree: allocatedBlock,
+        allocatedBlock,
+    };
+}
+
+/*
+Returns:
+{
+    tree: updated tree,
+    found: whether the block was found
+}
+*/
+function freeBlock(block, blockId) {
+    if (block.id === blockId && block.allocated) {
+        return {
+            tree: {
+                ...block,
+                allocated: false,
+                requestedSize: null,
+            },
+            found: true,
+        };
+    }
+
+    if (!isSplit(block)) {
+        return {
+            tree: block,
+            found: false,
+        };
+    }
+
+    const leftResult = freeBlock(block.left, blockId);
+
+    let updatedBlock = block;
+    let found = leftResult.found;
+
+    if (leftResult.found) {
+        updatedBlock = {
+            ...block,
+            left: leftResult.tree,
+        };
+    } else {
+        const rightResult = freeBlock(block.right, blockId);
+
+        found = rightResult.found;
+
+        if (rightResult.found) {
+            updatedBlock = {
+                ...block,
+                right: rightResult.tree,
+            };
+        }
+    }
+
+    if (!found) {
+        return {
+            tree: block,
+            found: false,
+        };
+    }
+
+    /*
+    Merge the children when both buddies are:
+    - not allocated
+    - not further split
+    */
+    const leftIsFree =
+        !updatedBlock.left.allocated && !isSplit(updatedBlock.left);
+
+    const rightIsFree =
+        !updatedBlock.right.allocated && !isSplit(updatedBlock.right);
+
+    if (leftIsFree && rightIsFree) {
+        return {
+            tree: {
+                ...updatedBlock,
+                left: null,
+                right: null,
+            },
+            found: true,
+        };
+    }
+
+    return {
+        tree: updatedBlock,
+        found: true,
+    };
+}
+
+function getAllocations(block, result = []) {
+    if (block.allocated) {
+        result.push({
+            blockId: block.id,
+            requestedSize: block.requestedSize,
+            blockSize: block.size,
+        });
+
+        return result;
+    }
+
+    if (isSplit(block)) {
+        getAllocations(block.left, result);
+        getAllocations(block.right, result);
+    }
+
+    return result;
+}
+
+export default function BuddyModule() {
+    const [tree, setTree] = useState(() => createBlock('root', MAX_SIZE));
+
+    const [requestSize, setRequestSize] = useState(MIN_SIZE);
+
+    const [manualSize, setManualSize] = useState('');
+
+    const [highlight, setHighlight] = useState(null);
+
+    const allocations = useMemo(() => getAllocations(tree), [tree]);
+
+    const usedMemory = allocations.reduce(
+        (sum, allocation) => sum + allocation.blockSize,
+        0
+    );
+
+    const requestedMemory = allocations.reduce(
+        (sum, allocation) => sum + allocation.requestedSize,
+        0
+    );
+
+    const usagePercent = (usedMemory / MAX_SIZE) * 100;
+
+    const handleAllocate = (size) => {
+        const numericSize = Number(size);
+
+        if (
+            !Number.isInteger(numericSize) ||
+            numericSize < MIN_SIZE ||
+            numericSize > MAX_SIZE
+        ) {
+            alert(
+                `Size must be an integer between ${MIN_SIZE} and ${MAX_SIZE} KB`
+            );
+            return;
+        }
+
+        const result = allocateBlock(tree, numericSize);
+
+        if (!result.allocatedBlock) {
+            alert('No suitable contiguous memory block is available');
+            return;
+        }
+
+        setTree(result.tree);
+
+        setHighlight({
+            id: result.allocatedBlock.id,
+            action: 'allocated',
+        });
+
+        setTimeout(() => {
+            setHighlight(null);
+        }, 800);
+    };
+
+    const handleManualSubmit = (event) => {
+        event.preventDefault();
+
+        handleAllocate(manualSize);
+        setManualSize('');
+    };
+
+    const handleFree = (blockId) => {
+        const result = freeBlock(tree, blockId);
+
+        if (!result.found) {
+            return;
+        }
+
+        setTree(result.tree);
+
+        setHighlight({
+            id: blockId,
+            action: 'freed',
+        });
+
+        setTimeout(() => {
+            setHighlight(null);
+        }, 800);
+    };
+
+    const resetMemory = () => {
+        setTree(createBlock('root', MAX_SIZE));
+        setHighlight(null);
+    };
 
     return (
-      <motion.div
-        key={block.id}
-        layout
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-        className={`p-2 m-1 rounded border text-center text-xs font-mono shadow-md ${
-          block.allocated ? 'border-green-500 bg-green-900/30' : 'border-gray-600 bg-gray-800/20'
-        } ${isHighlighted ? highlightColor : ''}`}
-        style={{ minWidth: `${Math.max(60, 120 - depth * 20)}px` }}
-      >
-        <div>{block.size} KB</div>
-        <div className="text-[10px]">
-          {block.allocated ? 'Allocated' : 'Free'}
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 p-6 text-white">
+            <h1 className="mb-12 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-center text-3xl font-bold text-transparent">
+                Buddy Memory Allocator
+            </h1>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <section className="rounded-xl bg-gray-800 p-6 shadow-lg">
+                    <h2 className="mb-4 text-xl font-semibold">
+                        Allocate Memory
+                    </h2>
+
+                    <label
+                        htmlFor="request-size"
+                        className="mb-2 block text-sm"
+                    >
+                        Selected size: {requestSize} KB
+                    </label>
+
+                    <input
+                        id="request-size"
+                        type="range"
+                        min={MIN_SIZE}
+                        max={MAX_SIZE}
+                        value={requestSize}
+                        onChange={(event) =>
+                            setRequestSize(Number(event.target.value))
+                        }
+                        className="mb-4 w-full"
+                    />
+
+                    <motion.button
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.97 }}
+                        onClick={() => handleAllocate(requestSize)}
+                        className="mb-4 w-full rounded-lg bg-blue-600 py-2 font-medium hover:bg-blue-700"
+                    >
+                        Allocate Memory
+                    </motion.button>
+
+                    <form onSubmit={handleManualSubmit} className="mb-6">
+                        <label
+                            htmlFor="manual-size"
+                            className="mb-2 block text-sm"
+                        >
+                            Manual size
+                        </label>
+
+                        <input
+                            id="manual-size"
+                            type="number"
+                            min={MIN_SIZE}
+                            max={MAX_SIZE}
+                            value={manualSize}
+                            onChange={(event) =>
+                                setManualSize(event.target.value)
+                            }
+                            placeholder="Enter size in KB"
+                            className="mb-2 w-full rounded border border-gray-500 bg-gray-700 px-3 py-2 text-white"
+                        />
+
+                        <button
+                            type="submit"
+                            className="w-full rounded-lg bg-green-600 py-2 font-medium hover:bg-green-700"
+                        >
+                            Manual Allocate
+                        </button>
+                    </form>
+
+                    <div className="mb-3 flex items-center justify-between">
+                        <h3 className="font-semibold">Active Allocations</h3>
+
+                        <button
+                            onClick={resetMemory}
+                            className="text-xs text-gray-400 hover:text-white"
+                        >
+                            Reset
+                        </button>
+                    </div>
+
+                    <AnimatePresence>
+                        {allocations.length === 0 && (
+                            <p className="text-sm text-gray-400">
+                                No active allocations
+                            </p>
+                        )}
+
+                        {allocations.map((allocation) => (
+                            <motion.div
+                                key={allocation.blockId}
+                                layout
+                                initial={{
+                                    opacity: 0,
+                                    y: -5,
+                                }}
+                                animate={{
+                                    opacity: 1,
+                                    y: 0,
+                                }}
+                                exit={{
+                                    opacity: 0,
+                                    x: -10,
+                                }}
+                                className="mb-2 flex items-center justify-between rounded bg-gray-700/50 p-2"
+                            >
+                                <div className="text-sm">
+                                    <div>
+                                        Requested: {allocation.requestedSize} KB
+                                    </div>
+
+                                    <div className="text-xs text-gray-400">
+                                        Block: {allocation.blockSize} KB
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() =>
+                                        handleFree(allocation.blockId)
+                                    }
+                                    className="px-2 text-xs text-red-400 hover:text-red-300"
+                                >
+                                    Free
+                                </button>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </section>
+
+                <section className="rounded-xl bg-gray-800 p-6 shadow-lg md:col-span-1 lg:col-span-2">
+                    <div className="mb-4 flex items-center justify-between">
+                        <h2 className="text-xl font-semibold">Memory Tree</h2>
+
+                        <div className="text-right text-sm">
+                            <div>
+                                Reserved: {usedMemory} KB / {MAX_SIZE} KB
+                            </div>
+
+                            <div className="text-xs text-gray-400">
+                                Requested: {requestedMemory} KB
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="mb-6 h-3 w-full rounded-full bg-gray-700">
+                        <div
+                            className="h-3 rounded-full bg-blue-500 transition-all duration-500"
+                            style={{
+                                width: `${usagePercent}%`,
+                            }}
+                        />
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <MemoryBlock block={tree} highlight={highlight} />
+                    </div>
+                </section>
+            </div>
         </div>
-        {isHighlighted && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="absolute -top-2 -right-2 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-full"
-          >
-            {highlightedBlock.action}
-          </motion.div>
-        )}
-        {block.isSplit && (
-          <div className="flex justify-center gap-2 mt-2">
-            {renderBlock(block.left, depth + 1)}
-            {renderBlock(block.right, depth + 1)}
-          </div>
-        )}
-      </motion.div>
     );
-  }
+}
+
+function MemoryBlock({ block, highlight, depth = 0 }) {
+    const split = isSplit(block);
+    const isHighlighted = highlight?.id === block.id;
+
+    return (
+        <motion.div
+            layout
+            initial={{
+                opacity: 0,
+                scale: 0.95,
+            }}
+            animate={{
+                opacity: 1,
+                scale: 1,
+            }}
+            className={`relative m-1 rounded border p-2 text-center font-mono text-xs shadow-md ${
+                block.allocated
+                    ? 'border-green-500 bg-green-900/30'
+                    : 'border-gray-600 bg-gray-800/20'
+            } ${isHighlighted ? 'ring-2 ring-blue-400' : ''}`}
+            style={{
+                minWidth: `${Math.max(65, 120 - depth * 15)}px`,
+            }}
+        >
+            <div>{block.size} KB</div>
+
+            <div className="text-[10px]">
+                {block.allocated
+                    ? `Allocated (${block.requestedSize} KB)`
+                    : split
+                      ? 'Split'
+                      : 'Free'}
+            </div>
+
+            {isHighlighted && (
+                <motion.span
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="absolute -right-2 -top-2 rounded-full bg-black px-2 py-0.5 text-[10px]"
+                >
+                    {highlight.action}
+                </motion.span>
+            )}
+
+            {split && (
+                <div className="mt-2 flex justify-center gap-2">
+                    <MemoryBlock
+                        block={block.left}
+                        highlight={highlight}
+                        depth={depth + 1}
+                    />
+
+                    <MemoryBlock
+                        block={block.right}
+                        highlight={highlight}
+                        depth={depth + 1}
+                    />
+                </div>
+            )}
+        </motion.div>
+    );
 }
